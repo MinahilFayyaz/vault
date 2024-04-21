@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dynamic_icon/flutter_dynamic_icon.dart';
-import 'package:vault/widgets/custombutton.dart';
+import '../../consts/consts.dart';
+import '../../widgets/custombutton.dart';
 
 class AppIcons extends StatefulWidget {
   const AppIcons({Key? key}) : super(key: key);
 
   @override
-  State<AppIcons> createState() => _AppIconsState();
+  _AppIconsState createState() => _AppIconsState();
 }
 
 class _AppIconsState extends State<AppIcons> {
-  int iconIndex = 0;
-  List iconName = <String>['icon1', 'icon2', 'icon3'];
-  List imagefiles = [
+  int selectedIconIndex = 0;
+  List<String> iconNames = ['icon1', 'icon2', 'icon3'];
+  List<String> imageFiles = [
     'assets/icon1.png',
     'assets/icon2.png',
     'assets/icon3.png',
@@ -21,80 +22,87 @@ class _AppIconsState extends State<AppIcons> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                buildIconTile(0, 'red'),
-                buildIconTile(1, 'dark'),
-                buildIconTile(2, 'blue'),
-                HeightSpacer(myHeight: 16),
-                CustomButton(
-                    ontap: () => changeAppIcon(), buttontext: 'Set as app icon',),
-              ],
-            )),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? Color(0xFFFFFFFF)
+            : Consts.FG_COLOR,
+        title: Text(
+          'App Icon',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'GilroyBold',
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
+        child: Column(
+          children: [
+            Center(
+              child: Text(
+                'Try a new look for the app to reflect the types\nof Photos you are storing',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Gilroy',
+                ),
+              ),
+            ),
+            // Row of app icons
+            Padding(
+              padding: const EdgeInsets.only(top: 28.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(iconNames.length, (index) {
+                  return buildIconTile(index);
+                }),
+              ),
+            ),
+            // Spacer to push the button to the bottom
+            Expanded(child: SizedBox()),
+            // Apply button at the bottom
+            Padding(
+              padding: const EdgeInsets.only(bottom: 47.0),
+              child: CustomButton(
+                ontap: () => changeAppIcon(),
+                buttontext: 'Apply',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget buildIconTile(int index, String themeTxt) =>
-      Padding(
-        padding: EdgeInsets.all(16 / 2),
-        child: GestureDetector(
-          onTap: () => setState(() => iconIndex = index),
-          child: ListTile(
-              contentPadding: const EdgeInsets.only(left: 0.0, right: 0.0),
-              leading: Image.asset(
-                imagefiles[index],
-                width: 45,
-                height: 45,
-              ),
-              title: Text(themeTxt, style: const TextStyle(fontSize: 25)),
-              trailing: iconIndex == index
-                  ? const Icon(
-                Icons.check_circle_rounded,
-                color: Colors.green,
-                size: 30,
-              )
-                  : Icon(
-                Icons.circle_outlined,
-                color: Colors.grey.withOpacity(0.5),
-                size: 30,
-              )),
+  Widget buildIconTile(int index) {
+    return GestureDetector(
+      onTap: () => setState(() => selectedIconIndex = index),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 10),
+        child: Image.asset(
+          imageFiles[index],
+          width: 60,
+          height: 60,
         ),
-      );
+        decoration: BoxDecoration(
+          border: selectedIconIndex == index
+              ? Border.all(color: Consts.COLOR, width: 2)
+              : Border.all(color: Colors.transparent),
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
 
-  changeAppIcon() async {
+  Future<void> changeAppIcon() async {
     try {
       if (await FlutterDynamicIcon.supportsAlternateIcons) {
-        await FlutterDynamicIcon.setAlternateIconName(iconName[iconIndex]);
+        await FlutterDynamicIcon.setAlternateIconName(iconNames[selectedIconIndex]);
         debugPrint("App icon change successful");
-        return;
       }
     } catch (e) {
       debugPrint("Exception: ${e.toString()}");
     }
-    debugPrint("Failed to change app icon ");
-  }
-}
-
-class HeightSpacer extends StatelessWidget {
-  final double myHeight;
-  const HeightSpacer({Key? key, required this.myHeight}) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: myHeight,
-    );
-  }
-}
-class WidthSpacer extends StatelessWidget {
-  final double myWidth;
-  const WidthSpacer({Key? key, required this.myWidth}) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: myWidth,
-    );
   }
 }

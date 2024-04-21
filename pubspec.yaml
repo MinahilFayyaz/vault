@@ -53,6 +53,7 @@ dependencies:
   image_gallery_saver:
   photo_manager:
   flutter_dynamic_icon:
+  archive:
 
 
 dev_dependencies:
@@ -115,9 +116,7 @@ flutter:
 
   assets:
   - assets/
-  - assets/icon1.png
-  - assets/icon2.png
-  - assets/icon3.png
+  - assets/settings/
 
   #   - images/a_dot_ham.jpeg
   fonts:

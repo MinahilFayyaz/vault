@@ -23,7 +23,9 @@ class Permission extends StatelessWidget {
             right: 0,
             height: size.height / 2,
             child: Container(
-              color: Consts.BG_COLOR,
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Colors.white // Color for light theme
+                  : Consts.BG_COLOR,
             ),
           ),
           // Second Container: Bottom half with FG_COLOR
@@ -33,7 +35,9 @@ class Permission extends StatelessWidget {
             right: 0,
             height: size.height / 2,
             child: Container(
-              color: fgcolor,
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Color(0xFFF5F5F5) // Color for light theme
+                  : Consts.BG_COLOR,
             ),
           ),
           // Content in the middle
@@ -51,7 +55,7 @@ class Permission extends StatelessWidget {
                     'Allow access to the LOCKER enables\nusers to securely store and manage\ntheir private photos within a\nprotected environment.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
+                      //color: Colors.white,
                       fontSize: 16,
                       fontFamily: 'Gilroy',
                       fontWeight: FontWeight.w400,

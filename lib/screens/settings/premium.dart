@@ -96,6 +96,7 @@ class PremiumScreen extends StatelessWidget {
                       SizedBox(width: size.width * 0.03,),
                       Text('upload unlimited Photo and Videos',
                       style: TextStyle(
+                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w700
                       ),)
@@ -109,6 +110,7 @@ class PremiumScreen extends StatelessWidget {
                       SizedBox(width: size.width * 0.03,),
                       Text('Support High Qiality',
                         style: TextStyle(
+                          color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w700
                         ),)
@@ -122,6 +124,7 @@ class PremiumScreen extends StatelessWidget {
                       SizedBox(width: size.width * 0.03,),
                       Text('Download Stored Assets in anytime',
                         style: TextStyle(
+                          color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w700
                         ),)
@@ -172,6 +175,7 @@ class PremiumScreen extends StatelessWidget {
                     child: Text(
                       'Continue with Ads',
                       style: TextStyle(
+                        color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w700
                       ),

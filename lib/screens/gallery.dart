@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
+import '../consts/consts.dart';
 import 'gallerydatabaseretrieve.dart';
 import 'imagepreview.dart';
 
@@ -143,7 +145,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
         if (bytesSnapshot.connectionState == ConnectionState.done) {
           final bytes = bytesSnapshot.data;
           if (bytes != null) {
-            return Image.memory(bytes, fit: BoxFit.cover);
+            return Container(
+                width: 100, // Set a fixed width for the image
+                height: 100,
+                child: Image.memory(bytes, fit: BoxFit.cover)
+            );
           }
         }
         return const Center(child: CircularProgressIndicator());
@@ -194,37 +200,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 
 
-
-  // Future<Uint8List> _getImageBytes(int index) async {
-  //   try {
-  //     // Fetch the asset at the given index
-  //     List<AssetEntity> media = await albums[0].getAssetListPaged(size: 60, page: currentPage);
-  //     if (index >= media.length) {
-  //       print('Invalid index $index');
-  //       return Uint8List(0);
-  //     }
-  //
-  //     // Access the file from the asset
-  //     AssetEntity asset = media[index];
-  //     File? file = await asset.file;
-  //     if (file != null) {
-  //       Uint8List fileData = await file.readAsBytes();
-  //       if (fileData.isNotEmpty) {
-  //         return fileData;
-  //       } else {
-  //         print('File data is empty at index $index');
-  //         return Uint8List(0);
-  //       }
-  //     } else {
-  //       print('File is null at index $index');
-  //       return Uint8List(0);
-  //     }
-  //   } catch (error) {
-  //     print('Error reading image bytes at index $index: $error');
-  //     return Uint8List(0);
-  //   }
-  // }
-
   Future<Uint8List> _getImageBytes(String filePath) async {
     try {
       // Create a File object from the given file path
@@ -246,13 +221,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
     }
   }
 
-
-
-
-
-
-
-
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -263,12 +231,17 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? Color(0xFFFFFFFF) // Color for light theme
+            : Consts.FG_COLOR,
         title: Text(widget.folderName!),
       ),
       body: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           childAspectRatio: 1 / 1,
+          mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
+          crossAxisSpacing: 3.0,
         ),
         itemCount: _images.length,
         itemBuilder: (context, index) {
@@ -282,7 +255,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
             child: Stack(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(7.0),
+                  padding: EdgeInsets.symmetric(horizontal: 16.0,
+                  vertical: 16),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: _images[index],
@@ -301,8 +275,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ],
             ),
           );
-        },
-      ),
+        }
+        ),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (index) {
           if (index == 0) {
@@ -376,37 +350,90 @@ class _GalleryScreenState extends State<GalleryScreen> {
     });
   }
 
-  // Future<void> _openSavedImagesScreen() async {
-  //   // Open the Hive box where the images are stored
-  //   var box = await Hive.openBox(folderName);
-  //
-  //   // Retrieve all image data from the box
-  //   List<Uint8List> savedImages = box.values.map((value) => value as Uint8List).toList();
-  //
-  //   // Navigate to the SavedImagesScreen and pass the retrieved images
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => SavedImagesScreen(images: savedImages),
-  //     ),
-  //   );
-  // }
-
   void _showConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.light
+              ? Colors.white // Color for light theme
+              : Consts.BG_COLOR, //
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Center(
-                  child: Text(
-                    'Do you want to move $selectedCount item(s) to the AppLock?',
-                    style: const TextStyle(fontSize: 16),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 70.0,
+                                height: 40.0,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).brightness == Brightness.light
+                                      ? Color(0xFFF5F5F5) // Color for light theme
+                                      : Consts.FG_COLOR,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              // Image widget inside the Stack
+                              Positioned(
+                                child: ClipOval(
+                                  child: ColorFiltered(
+                                    colorFilter: ColorFilter.mode(
+                                        Theme.of(context).brightness == Brightness.light
+                                            ? Colors.black // Color for light theme
+                                            : Colors.white,
+                                        BlendMode.srcIn),
+                                    child: SvgPicture.asset(
+                                      'assets/Group.svg', // Replace with the path to your image
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 3.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Move In',
+                              style: const TextStyle(fontSize: 18,
+                              fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
                   ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 25.0,
+                vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Are you sure you want to move\n$selectedCount item(s)in the GalleryVault?',
+                      style: TextStyle(fontSize: 16,
+                      color:  Theme.of(context).brightness == Brightness.light
+                          ? Color(0x7F222222)
+                          : Colors.white.withOpacity(0.5)),
+                    ),
+                  ],
                 ),
               ),
               Row(
@@ -414,22 +441,29 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 children: [
                   TextButton(
                     onPressed: () {
+                      // Add your cancel logic here
                       Navigator.pop(context);
                     },
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(
-                          Theme.of(context).brightness == Brightness.light
-                              ? const Color(0xFFF5F5F5)
-                              : const Color(0xFF363C54)),
-                      shape: MaterialStateProperty.all(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)), // Set button size
+                      backgroundColor: MaterialStateProperty.all(
+                        Theme.of(context).brightness == Brightness.light
+                            ? Color(0xFFF5F5F5) // Color for light theme
+                            : Consts.FG_COLOR,
+                      ), // Set background color
                     ),
-                    child: const Text(
+                    child: Text(
                       'Cancel',
-                      style: TextStyle(color: Colors.black),
+                      style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.light
+                          ? Color(0x7F222222)
+                          : Colors.white.withOpacity(0.5)
+                      ),
                     ),
                   ),
                   TextButton(
@@ -438,16 +472,20 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       saveSelectedImagesToDatabase();
                     },
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(Colors.black),
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      backgroundColor: MaterialStateProperty.all(Consts.COLOR),
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
                     child: const Text(
-                      'OK',
-                      style: TextStyle(color: Colors.white),
+                      'Confirm',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
                     ),
                   ),
                 ],

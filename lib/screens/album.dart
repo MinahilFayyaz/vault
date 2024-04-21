@@ -144,6 +144,9 @@ class FolderContentsPage extends StatelessWidget {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(screenHeight * 0.07),
         child: AppBar(
+          backgroundColor: Theme.of(context).brightness == Brightness.light
+              ? Color(0xFFFFFFFF) // Color for light theme
+              : Consts.FG_COLOR,
           title: Text(
             folderName!,
             style: TextStyle(
