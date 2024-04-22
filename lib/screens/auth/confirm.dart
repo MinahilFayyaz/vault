@@ -26,6 +26,17 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
   final passwordMatchValidator = MatchValidator(errorText: 'Passwords do not match');
   String pin = '';
 
+  void _removeLastDigit() {
+    String currentPassword = confirmpasswordController.text;
+    if (currentPassword.isNotEmpty) {
+      String newPassword = currentPassword.substring(0, currentPassword.length - 1);
+      confirmpasswordController.text = newPassword;
+      pin = newPassword; // Update the pin variable
+    }
+  }
+
+
+
   @override
   void dispose() {
     confirmpasswordController.dispose();
@@ -176,27 +187,32 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                               // Add a cancel button as the 10th element in the grid view
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.0),
-                                child: ElevatedButton(
+                                child : CancelButton(
                                   onPressed: () {
-                                    setState(() {
-                                      pin = ''; // Clear the pin
-                                      confirmpasswordController.clear(); // Clear password controller text
-                                    });
+                                    _removeLastDigit();
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                    shape: CircleBorder(),
-                                    // Adjust color as needed
-                                  ),
-                                  child: Theme.of(context).brightness == Brightness.light
-                                      ? ColorFiltered(
-                                    colorFilter: ColorFilter.mode(
-                                      Colors.black,
-                                      BlendMode.srcIn,
-                                    ),
-                                    child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
-                                  )
-                                      : SvgPicture.asset('assets/Vector.svg'),
                                 ),
+                                // child: ElevatedButton(
+                                //   onPressed: () {
+                                //     setState(() {
+                                //       pin = ''; // Clear the pin
+                                //       confirmpasswordController.clear(); // Clear password controller text
+                                //     });
+                                //   },
+                                //   style: ElevatedButton.styleFrom(
+                                //     shape: CircleBorder(),
+                                //     // Adjust color as needed
+                                //   ),
+                                //   child: Theme.of(context).brightness == Brightness.light
+                                //       ? ColorFiltered(
+                                //     colorFilter: ColorFilter.mode(
+                                //       Colors.black,
+                                //       BlendMode.srcIn,
+                                //     ),
+                                //     child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
+                                //   )
+                                //       : SvgPicture.asset('assets/Vector.svg'),
+                                // ),
                               );
                             } else {
                               // Add numeric buttons from 1 to 9
@@ -253,5 +269,30 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
         ),
       );
     }
+  }
+}
+
+class CancelButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const CancelButton({Key? key, required this.onPressed}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      child: Theme.of(context).brightness == Brightness.light
+          ? ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.black,
+          BlendMode.srcIn,
+        ),
+        child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
+      )
+          : SvgPicture.asset('assets/Vector.svg'),
+      style: ElevatedButton.styleFrom(
+        shape: CircleBorder(),
+      ),
+    );
   }
 }

@@ -27,6 +27,16 @@ class _RegisterPageState extends State<RegisterPage> {
 
   String pin = ''; // Variable to store the entered pin
 
+  void _removeLastDigit() {
+    String currentPassword = passwordController.text;
+    if (currentPassword.isNotEmpty) {
+      String newPassword = currentPassword.substring(0, currentPassword.length - 1);
+      passwordController.text = newPassword;
+      pin = newPassword; // Update the pin variable
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -172,27 +182,32 @@ final screenHeight = MediaQuery.of(context).size.height;
                               // Add a cancel button as the 10th element in the grid view
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.0),
-                                child: ElevatedButton(
+                                child : CancelButton(
                                   onPressed: () {
-                                    setState(() {
-                                      pin = ''; // Clear the pin
-                                      passwordController.clear(); // Clear password controller text
-                                    });
+                                    _removeLastDigit();
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                    shape: CircleBorder(),
-                                    // Adjust color as needed
-                                  ),
-                                  child: Theme.of(context).brightness == Brightness.light
-                                      ? ColorFiltered(
-                                    colorFilter: ColorFilter.mode(
-                                      Colors.black,
-                                      BlendMode.srcIn,
-                                    ),
-                                    child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
-                                  )
-                                      : SvgPicture.asset('assets/Vector.svg'),
                                 ),
+                                // child: ElevatedButton(
+                                //   onPressed: () {
+                                //     setState(() {
+                                //       pin = ''; // Clear the pin
+                                //       passwordController.clear(); // Clear password controller text
+                                //     });
+                                //   },
+                                //   style: ElevatedButton.styleFrom(
+                                //     shape: CircleBorder(),
+                                //     // Adjust color as needed
+                                //   ),
+                                //   child: Theme.of(context).brightness == Brightness.light
+                                //       ? ColorFiltered(
+                                //     colorFilter: ColorFilter.mode(
+                                //       Colors.black,
+                                //       BlendMode.srcIn,
+                                //     ),
+                                //     child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
+                                //   )
+                                //       : SvgPicture.asset('assets/Vector.svg'),
+                                // ),
                               );
                             } else {
                               // Add numeric buttons from 1 to 9
@@ -252,5 +267,32 @@ final screenHeight = MediaQuery.of(context).size.height;
         MaterialPageRoute(builder: (context) => ConfirmPasswordPage(password: password)),
       );
     }
+  }
+}
+
+
+
+class CancelButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const CancelButton({Key? key, required this.onPressed}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      child: Theme.of(context).brightness == Brightness.light
+          ? ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.black,
+          BlendMode.srcIn,
+        ),
+        child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
+      )
+          : SvgPicture.asset('assets/Vector.svg'),
+      style: ElevatedButton.styleFrom(
+        shape: CircleBorder(),
+      ),
+    );
   }
 }
