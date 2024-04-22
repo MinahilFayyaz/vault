@@ -159,7 +159,9 @@ class _HomePageState extends State<HomePage> {
               child: GestureDetector(
                 onTap: (){
                   Navigator.push(context, MaterialPageRoute(builder: (context)
-                  => SettingsPage()));
+                  => SettingsPage(
+                      totalAlbums: folderNames.length, folderNames: folderNames
+                  )));
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -202,11 +204,14 @@ class _HomePageState extends State<HomePage> {
                           : Color(0xFF585956),
                       borderRadius: BorderRadius.circular(screenHeight * 0.01),
                     ),
-                    child: Icon(
-                      Icons.workspace_premium, // You can use any icon here
-                      size: screenWidth * 0.06, // Adjust the size as needed
-                      //color: Colors.white, // Icon color
-                    ),
+                        child: Theme.of(context).brightness == Brightness.light
+                        ? SvgPicture.asset('assets/premium (3).svg')
+                            : ColorFiltered(
+                          colorFilter: ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn),
+                          child: SvgPicture.asset('assets/premium (3).svg'),
+                    )
                   ),
                 ),
               ),

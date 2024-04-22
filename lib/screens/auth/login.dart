@@ -123,15 +123,15 @@ class _LoginPageState extends State<LoginPage> {
                           width: 270,
                           height: 60,
                           decoration: BoxDecoration(
-                            //color: Consts.BG_COLOR,
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Color(0xFFF5F5F5) // Color for light theme
+                                : Color(0xFF171823),
                             border: Border.all(color: Colors.deepPurple), // Change border color to purple
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: List.generate(
-                              4,
-                                  (index) {
+                              4, (index) {
                                 return Expanded(
                                   child: PinInputField(controller: _pinControllers[index]),
                                 );
@@ -184,7 +184,9 @@ class _LoginPageState extends State<LoginPage> {
                                     child: Text(
                                       index == 9 ? '0' : '${index + 1}', // Increment index by 1 to start counting from 1
                                       style: TextStyle(fontSize: 20,
-                                          //color: Colors.white
+                                        color: Theme.of(context).brightness == Brightness.light
+                                            ? Colors.black// Color for light theme
+                                            : Colors.white,
                                       ), // Change text color to white
                                     ),
                                   ),
@@ -258,23 +260,28 @@ class PinInputField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.deepPurple, fontSize: 60), // Set text color and size
+        style: TextStyle(
+          color: Colors.deepPurple,
+          fontSize: 60,
+        ),
         keyboardType: TextInputType.number,
         maxLength: 1,
-        obscureText: true,
+        obscureText: true, // Hide the entered text
         decoration: InputDecoration(
+          hintText: '*',
+          hintStyle: TextStyle(
+            color: Theme.of(context).brightness == Brightness.light
+                ? Colors.black
+                : Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+          ),
           counterText: '',
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 15), // Adjust vertical padding to center the text
+          contentPadding: EdgeInsets.zero, // Remove vertical padding
         ),
         onChanged: (_) {
-          // This function will be called whenever a digit is entered or removed
-          // Replace the entered digit with '*' in purple color
-          controller.value = controller.value.copyWith(
-            text: '*', // Show '*' instead of the entered digit
-            selection: TextSelection.collapsed(offset: 1), // Move cursor to the end
-            composing: TextRange.empty, // Clear any text composing
-          );
+          // No need to handle onChanged when using obscureText
         },
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -288,8 +295,6 @@ class PinInputField extends StatelessWidget {
 }
 
 
-
-
 class CancelButton extends StatelessWidget {
   final VoidCallback onPressed;
 
@@ -299,10 +304,19 @@ class CancelButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: onPressed,
-      child: SvgPicture.asset('assets/Vector.svg'),
+      child: Theme.of(context).brightness == Brightness.light
+          ? ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.black,
+          BlendMode.srcIn,
+        ),
+        child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
+      )
+          : SvgPicture.asset('assets/Vector.svg'),
       style: ElevatedButton.styleFrom(
-          shape: CircleBorder()
+        shape: CircleBorder(),
       ),
     );
   }
 }
+

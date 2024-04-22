@@ -54,6 +54,7 @@ dependencies:
   photo_manager:
   flutter_dynamic_icon:
   archive:
+  share_plus:
 
 
 dev_dependencies:

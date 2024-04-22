@@ -21,17 +21,6 @@ class FolderContentsPage extends StatelessWidget {
     required this.folderContents,
   }) : super(key: key);
 
-  // Retrieve images from Hive and combine them with images from homepage
-  // Future<List<File>> retrieveAndCombineImages() async {
-  //   // Retrieve images from the database
-  //   final databaseImages = await retrieveImagesFromHive();
-  //
-  //   // Combine images from homepage and database
-  //   final combinedImages = [...folderContents!, ...databaseImages];
-  //
-  //   return combinedImages;
-  // }
-
   Future<List<File>> retrieveAndCombineImages() async {
     // Retrieve images from the Hive database
     final databaseImages = await retrieveImagesFromHive();

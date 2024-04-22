@@ -33,12 +33,15 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
           onPopInvoked: (bool didPop) => Utils(context).onWillPop(),
           child: Scaffold(
             appBar: AppBar(
+              backgroundColor: Theme.of(context).brightness == Brightness.light
+                  ? Color(0xFFFFFFFF) // Color for light theme
+                  : Consts.FG_COLOR,
               title: Text(
                 'STEP 3/4',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
-                  color: Colors.white,
+                  //color: Colors.white,
                 ),
               ),
             ),
@@ -58,7 +61,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
-                          color: Colors.white,
+                          //color: Colors.white,
                         ),
                       ),
                       SizedBox(height: size.height * 0.02),
@@ -68,7 +71,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
-                          color: Colors.white,
+                          //color: Colors.white,
                         ),
                       ),
                       SizedBox(height: size.height * 0.03),

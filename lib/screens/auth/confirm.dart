@@ -41,12 +41,15 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
       builder: (BuildContext context, provider, Widget? child) {
         return Scaffold(
           appBar: AppBar(
+            backgroundColor: Theme.of(context).brightness == Brightness.light
+                ? Color(0xFFFFFFFF) // Color for light theme
+                : Consts.FG_COLOR,
             title:  Text(
               'STEP 2/4',
               style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
-                  color: Colors.white
+                  //color: Colors.white
               ),
             ),
           ),
@@ -66,7 +69,7 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
-                          color: Colors.white,
+                          //color: Colors.white,
                         ),
                       ),
                       SizedBox(height: size.height * 0.02),
@@ -75,7 +78,7 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
-                          color: Colors.white,
+                          //color: Colors.white,
                         ),
                       ),
                       SizedBox(height: size.height * 0.03),
@@ -90,16 +93,30 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                           widget.password,
                         ),
                         decoration: InputDecoration(
-                          //labelText: 'Confirm Password',
+                          //labelText: 'Password',
                           //filled: true,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide(
                                   color: Consts.COLOR)
                           ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Consts.COLOR, // Set the focused border color to Consts.COLOR
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Consts.COLOR, // Set the enabled border color to Consts.COLOR
+                            ),
+                          ),
                           hintText: ' ....',
                           hintStyle: TextStyle(
-                              color: Colors.white, // Set color of hint dots
+                              color:  Theme.of(context).brightness == Brightness.light
+                                  ? Colors.black// Color for light theme
+                                  : Colors.white,// Set color of hint dots
                               fontSize: 30, // Increase the font size of the hint text
                               fontWeight: FontWeight.bold, // Make the hint text bold (optional)
                               height: 1.5 ), // Set color of hint dots
@@ -170,7 +187,15 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                                     shape: CircleBorder(),
                                     // Adjust color as needed
                                   ),
-                                  child: Icon(Icons.cancel, color: Colors.white),
+                                  child: Theme.of(context).brightness == Brightness.light
+                                      ? ColorFiltered(
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.black,
+                                      BlendMode.srcIn,
+                                    ),
+                                    child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
+                                  )
+                                      : SvgPicture.asset('assets/Vector.svg'),
                                 ),
                               );
                             } else {
@@ -191,7 +216,10 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                                   ),
                                   child: Text(
                                     '${index + 1}',
-                                    style: TextStyle(fontSize: 20, color: Colors.white),
+                                    style: TextStyle(fontSize: 20, color:
+                                    Theme.of(context).brightness == Brightness.light
+                                        ? Colors.black// Color for light theme
+                                        : Colors.white,),
                                   ),
                                 ),
                               );
