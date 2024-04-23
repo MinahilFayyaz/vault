@@ -94,7 +94,7 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                       ),
                       SizedBox(height: size.height * 0.03),
                       TextFormField(
-                        focusNode: focus,
+                        //focusNode: focus,
                         obscureText: true,
                         controller: confirmpasswordController,
                         keyboardType: TextInputType.visiblePassword,
@@ -107,40 +107,43 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                           //labelText: 'Password',
                           //filled: true,
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(
-                                  color: Consts.COLOR)
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Consts.COLOR,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: Consts.COLOR, // Set the focused border color to Consts.COLOR
+                              color: Consts.COLOR,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: Consts.COLOR, // Set the enabled border color to Consts.COLOR
+                              color: Consts.COLOR,
                             ),
                           ),
                           hintText: ' ....',
                           hintStyle: TextStyle(
-                              color:  Theme.of(context).brightness == Brightness.light
-                                  ? Colors.black// Color for light theme
-                                  : Colors.white,// Set color of hint dots
-                              fontSize: 30, // Increase the font size of the hint text
-                              fontWeight: FontWeight.bold, // Make the hint text bold (optional)
-                              height: 1.5 ), // Set color of hint dots
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.black
+                                : Colors.white,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
                           // Custom style for the actual text (dots)
                           counterText: "",
                           contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
+                          alignLabelWithHint: true, // Align label with the hint text
                         ),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            color: Consts.COLOR, // Set the text color to deep purple
-                            fontSize: 30 // Adjust the font size as needed for the actual text
+                          color: Consts.COLOR,
+                          fontSize: 30,
                         ),
                       ),
+
                       SizedBox(
                         height: size.height * 0.01,
                       ),
@@ -159,9 +162,14 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                         mainAxisSpacing: 16.0,
                         crossAxisSpacing: 1.0,
                         children: List.generate(
-                          11, // Increase by 1 to include the cancel button
+                          12, // Increase by 1 to include the cancel button
                               (index) {
-                            if (index == 9) {
+                                if (index == 9) {
+                                  // Leave the 9th index empty
+                                  return Container();
+                                }
+
+                                if (index == 10) {
                               // Add the 0 button as the 9th element in the grid view
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -183,7 +191,7 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                                   ),
                                 ),
                               );
-                            } else if (index == 10) {
+                            } else if (index == 11) {
                               // Add a cancel button as the 10th element in the grid view
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.0),

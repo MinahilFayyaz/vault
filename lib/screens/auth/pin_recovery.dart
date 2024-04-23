@@ -21,6 +21,9 @@ class PinRecoveryPage extends StatefulWidget {
 class _PinRecoveryPageState extends State<PinRecoveryPage> {
   final emailController = TextEditingController();
   final focus = FocusNode();
+  final RegExp emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +84,15 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.done,
-                        validator: EmailValidator(errorText: 'Enter a valid email address'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!emailRegex.hasMatch(value)) {
+                            return 'Enter a valid email address';
+                          }
+                          return null;
+                        },
                         decoration: InputDecoration(
                           labelText: 'Enter Your Email',
                           filled: true,

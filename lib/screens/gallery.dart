@@ -1,13 +1,62 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import '../consts/consts.dart';
 import 'gallerydatabaseretrieve.dart';
 import 'imagepreview.dart';
+
+class VideoPlayerWidget extends StatefulWidget {
+  final File file;
+
+  const VideoPlayerWidget({Key? key, required this.file}) : super(key: key);
+
+  @override
+  _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
+}
+
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
+  late VideoPlayerController _controller;
+  late Future<void> _initializeVideoPlayerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(widget.file);
+    _initializeVideoPlayerFuture = _controller.initialize();
+    _controller.setLooping(true); // Optional: Set looping if needed
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+        future: _initializeVideoPlayerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            );
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+    );
+  }
+}
+
 
 class GalleryScreen extends StatefulWidget {
   final String? folderName;
@@ -126,35 +175,85 @@ class _GalleryScreenState extends State<GalleryScreen> {
   void _onImageTap(AssetEntity asset) async {
     final file = await asset.file;
     if (file != null) {
-      final imageName = file.path.split('/').last;
+      if (asset.type == AssetType.image) {
+        final imageName = file.path
+            .split('/')
+            .last;
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => ImagePreviewScreen(imageFile: file,
+        //       imageName: imageName,
+        //       folderName: '',),
+        //   ),
+        // );
+      }
+    }
+    else if (asset.type == AssetType.video) {
+      final videoName = file!.path.split('/').last;
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ImagePreviewScreen(imageFile: file,
-              imageName: imageName,
-          folderName: '',),
+            imageName: videoName,
+            folderName: '',),
         ),
       );
     }
   }
 
   Widget _buildImageWidget(File file) {
-    return FutureBuilder(
-      future: file.readAsBytes(),
-      builder: (BuildContext context, AsyncSnapshot<Uint8List> bytesSnapshot) {
-        if (bytesSnapshot.connectionState == ConnectionState.done) {
-          final bytes = bytesSnapshot.data;
-          if (bytes != null) {
-            return Container(
-                width: 100, // Set a fixed width for the image
-                height: 100,
-                child: Image.memory(bytes, fit: BoxFit.cover)
-            );
+    final String filePath = file.path.toLowerCase();
+    if (filePath.endsWith('.mp4') || filePath.endsWith('.mov')) {
+      // If it's a video file, return a video player widget
+      return _buildVideoWidget(file);
+    } else {
+      // If it's an image file, load it as an image
+      return FutureBuilder(
+        future: file.readAsBytes(),
+        builder: (BuildContext context, AsyncSnapshot<Uint8List> bytesSnapshot) {
+          if (bytesSnapshot.connectionState == ConnectionState.done) {
+            final bytes = bytesSnapshot.data;
+            if (bytes != null) {
+              return Container(
+                  width: 100, // Set a fixed width for the image
+                  height: 100,
+                  child: Image.memory(bytes, fit: BoxFit.cover)
+              );
+            }
           }
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+    }
+  }
+
+  Widget _buildVideoWidget(File file) {
+    return FutureBuilder(
+      future: _generateThumbnail(file),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done && snapshot.data != null) {
+          final Uint8List thumbnailBytes = snapshot.data as Uint8List;
+          return Image.memory(
+            thumbnailBytes,
+            width: 100, // Set a fixed width for the thumbnail
+            height: 100,
+            fit: BoxFit.cover,
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
         }
-        return const Center(child: CircularProgressIndicator());
       },
     );
+  }
+
+  Future<Uint8List?> _generateThumbnail(File file) async {
+    final thumbnail = await VideoThumbnail.thumbnailData(
+      video: file.path,
+      imageFormat: ImageFormat.PNG, // Choose the desired image format
+      quality: 50, // Adjust the quality of the thumbnail (0 - 100)
+    );
+    return thumbnail;
   }
 
   Future<void> saveSelectedImagesToDatabase() async {
@@ -199,7 +298,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
     }
   }
 
-
   Future<Uint8List> _getImageBytes(String filePath) async {
     try {
       // Create a File object from the given file path
@@ -237,46 +335,46 @@ class _GalleryScreenState extends State<GalleryScreen> {
         title: Text(widget.folderName!),
       ),
       body: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 1 / 1,
-          mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
-          crossAxisSpacing: 3.0,
-        ),
-        itemCount: _images.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _isSelected[index] = !_isSelected[index];
-                selectedCount += _isSelected[index] ? 1 : -1;
-              });
-            },
-            child: Stack(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0,
-                  vertical: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: _images[index],
-                  ),
-                ),
-                if (_isSelected[index])
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 24,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 1 / 1,
+            mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
+            crossAxisSpacing: 3.0,
+          ),
+          itemCount: _images.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isSelected[index] = !_isSelected[index];
+                  selectedCount += _isSelected[index] ? 1 : -1;
+                });
+              },
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0,
+                        vertical: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: _images[index],
                     ),
                   ),
-              ],
-            ),
-          );
-        }
-        ),
+                  if (_isSelected[index])
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 24,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }
+      ),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (index) {
           if (index == 0) {
@@ -410,7 +508,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                             Text(
                               'Move In',
                               style: const TextStyle(fontSize: 18,
-                              fontWeight: FontWeight.w700),
+                                  fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
@@ -422,16 +520,16 @@ class _GalleryScreenState extends State<GalleryScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 25.0,
-                vertical: 8.0),
+                    vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       'Are you sure you want to move\n$selectedCount item(s)in the GalleryVault?',
                       style: TextStyle(fontSize: 16,
-                      color:  Theme.of(context).brightness == Brightness.light
-                          ? Color(0x7F222222)
-                          : Colors.white.withOpacity(0.5)),
+                          color:  Theme.of(context).brightness == Brightness.light
+                              ? Color(0x7F222222)
+                              : Colors.white.withOpacity(0.5)),
                     ),
                   ],
                 ),
@@ -461,8 +559,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       'Cancel',
                       style: TextStyle(
                           color: Theme.of(context).brightness == Brightness.light
-                          ? Color(0x7F222222)
-                          : Colors.white.withOpacity(0.5)
+                              ? Color(0x7F222222)
+                              : Colors.white.withOpacity(0.5)
                       ),
                     ),
                   ),
@@ -482,10 +580,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     ),
                     child: const Text(
                       'Confirm',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ],
@@ -498,22 +596,32 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 }
 
-class HiveService {
 
-  Future<void> storeImage(Uint8List imageBytes, String folderName) async {
-    print('Storing image in the database...');
+class HiveService {
+  Future<void> storeImage(dynamic media, String folderName) async {
+    print('Storing media in the database...');
     var box = await Hive.openBox(folderName);
 
     var key = DateTime.now().millisecondsSinceEpoch.toString();
 
-    bool isDuplicate = box.values.any((value) => value == imageBytes);
-    if (isDuplicate) {
-      print('Duplicate image found, skipping...');
-      return;
+    if (media is Uint8List) {
+      // If media is image bytes, store directly
+      await box.put(key, media);
+      print('Image stored in database with key $key');
+    } else if (media is String) {
+      // If media is video file path, read file and store bytes
+      try {
+        File file = File(media);
+        Uint8List videoBytes = await file.readAsBytes();
+        await box.put(key, videoBytes);
+        print('Video stored in database with key $key');
+      } catch (error) {
+        print('Error storing video in database: $error');
+      }
+    } else {
+      print('Unsupported media type');
     }
-
-    await box.put(key, imageBytes);
-    print('Image stored in database with key {key}');
   }
 }
+
 

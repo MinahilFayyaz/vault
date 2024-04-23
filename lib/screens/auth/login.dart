@@ -19,8 +19,10 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _loginformKey = GlobalKey<FormState>();
-  final List<TextEditingController> _pinControllers = List.generate(4, (_) => TextEditingController());
-  final passwordMatchValidator = MatchValidator(errorText: 'Passwords do not match');
+  final List<TextEditingController> _pinControllers =
+  List.generate(4, (_) => TextEditingController());
+  final passwordMatchValidator =
+  MatchValidator(errorText: 'Passwords do not match');
 
   @override
   void initState() {
@@ -33,7 +35,8 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onPinChanged() {
     // Combine pin inputs from all controllers
-    final pin = _pinControllers.map((controller) => controller.text.trim()).join();
+    final pin =
+    _pinControllers.map((controller) => controller.text.trim()).join();
 
     // Validate the entered pin when all 4 digits have been entered
     if (pin.length == 4) {
@@ -80,7 +83,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-
   @override
   void dispose() {
     _pinControllers.forEach((controller) => controller.dispose());
@@ -123,17 +125,22 @@ class _LoginPageState extends State<LoginPage> {
                           width: 270,
                           height: 60,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.light
+                            color:
+                            Theme.of(context).brightness == Brightness.light
                                 ? Color(0xFFF5F5F5) // Color for light theme
                                 : Color(0xFF171823),
-                            border: Border.all(color: Colors.deepPurple), // Change border color to purple
+                            border: Border.all(
+                                color: Colors
+                                    .deepPurple), // Change border color to purple
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: List.generate(
-                              4, (index) {
+                              4,
+                                  (index) {
                                 return Expanded(
-                                  child: PinInputField(controller: _pinControllers[index]),
+                                  child: PinInputField(
+                                      controller: _pinControllers[index]),
                                 );
                               },
                             ),
@@ -148,12 +155,45 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisSpacing: 16.0,
                           crossAxisSpacing: 1.0,
                           children: List.generate(
-                            11, // Increase by 1 to include the cancel button
+                            12, // Increase by 1 to include the cancel button
                                 (index) {
-                              if (index == 10) {
-                                // Add a cancel button as the 10th element in the grid view
+                              if (index == 9) {
+                                // Leave the 9th index empty
+                                return Container();
+                              } else if (index == 10) {
+                                // Display "0" at the 10th index
                                 return Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                  padding:
+                                  EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      final pinIndex = _pinControllers
+                                          .indexWhere((controller) =>
+                                      controller.text.isEmpty);
+                                      if (pinIndex != -1) {
+                                        _pinControllers[pinIndex].text = '0';
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      shape: CircleBorder(),
+                                    ),
+                                    child: Text(
+                                      '0',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: Theme.of(context).brightness ==
+                                            Brightness.light
+                                            ? Colors.black
+                                            : Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              } else if (index == 11) {
+                                // Add a cancel button as the 11th element in the grid view
+                                return Padding(
+                                  padding:
+                                  EdgeInsets.symmetric(horizontal: 8.0),
                                   child: CancelButton(
                                     onPressed: () {
                                       _removeLastDigit();
@@ -161,33 +201,32 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 );
                               } else {
-                                // Add numeric buttons from 1 to 9, and then 0
+                                // Add numeric buttons from 1 to 9
                                 return Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                  padding:
+                                  EdgeInsets.symmetric(horizontal: 8.0),
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      if (index == 9) {
-                                        final pinIndex = _pinControllers.indexWhere((controller) => controller.text.isEmpty);
-                                        if (pinIndex != -1) {
-                                          _pinControllers[pinIndex].text = '0';
-                                        }
-                                      } else {
-                                        final pinIndex = _pinControllers.indexWhere((controller) => controller.text.isEmpty);
-                                        if (pinIndex != -1) {
-                                          _pinControllers[pinIndex].text = '${index + 1}'; // Increment index by 1 to start counting from 1
-                                        }
+                                      final pinIndex = _pinControllers
+                                          .indexWhere((controller) =>
+                                      controller.text.isEmpty);
+                                      if (pinIndex != -1) {
+                                        _pinControllers[pinIndex].text =
+                                        '${index + 1}'; // Increment index by 1 to start counting from 1
                                       }
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      shape: CircleBorder(),// Change button color to purple
+                                      shape: CircleBorder(),
                                     ),
                                     child: Text(
-                                      index == 9 ? '0' : '${index + 1}', // Increment index by 1 to start counting from 1
-                                      style: TextStyle(fontSize: 20,
-                                        color: Theme.of(context).brightness == Brightness.light
-                                            ? Colors.black// Color for light theme
+                                      '${index + 1}', // Increment index by 1 to start counting from 1
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: Theme.of(context).brightness ==
+                                            Brightness.light
+                                            ? Colors.black
                                             : Colors.white,
-                                      ), // Change text color to white
+                                      ),
                                     ),
                                   ),
                                 );
@@ -195,6 +234,7 @@ class _LoginPageState extends State<LoginPage> {
                             },
                           ),
                         ),
+
                         //SizedBox(height: size.height * 0.05),
                         // CustomButton(
                         //   ontap: () {
@@ -215,7 +255,6 @@ class _LoginPageState extends State<LoginPage> {
       },
     );
   }
-
 
   void validate(String pin) async {
     final FormState form = _loginformKey.currentState!;
@@ -245,7 +284,6 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
   }
-
 }
 
 class PinInputField extends StatelessWidget {
@@ -278,7 +316,8 @@ class PinInputField extends StatelessWidget {
           ),
           counterText: '',
           border: InputBorder.none,
-          contentPadding: EdgeInsets.zero, // Remove vertical padding
+          contentPadding:
+          EdgeInsets.only(bottom: 11), // Remove vertical padding
         ),
         onChanged: (_) {
           // No need to handle onChanged when using obscureText
@@ -293,7 +332,6 @@ class PinInputField extends StatelessWidget {
     );
   }
 }
-
 
 class CancelButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -310,7 +348,8 @@ class CancelButton extends StatelessWidget {
           Colors.black,
           BlendMode.srcIn,
         ),
-        child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
+        child: SvgPicture.asset(
+            'assets/Vector.svg'), // Color for light theme
       )
           : SvgPicture.asset('assets/Vector.svg'),
       style: ElevatedButton.styleFrom(
@@ -319,4 +358,3 @@ class CancelButton extends StatelessWidget {
     );
   }
 }
-

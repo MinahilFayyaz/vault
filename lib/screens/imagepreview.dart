@@ -11,6 +11,8 @@ import 'package:vault/widgets/custombutton.dart';
 import '../consts/consts.dart';
 import 'package:image/image.dart' as img;
 
+import 'gallery.dart';
+
 
 class ImagePreviewScreen extends StatefulWidget {
   final File imageFile;
@@ -529,7 +531,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       body: Padding(
         padding: EdgeInsets.all(screenWidth * 0.04),
         child: Center(
-            child: Image.file(
+            child: fileExtension.toLowerCase() == 'mp4' || fileExtension.toLowerCase() == 'mov'
+           ? VideoPlayerWidget(file: widget.imageFile)
+              : Image.file(
                 widget.imageFile,
               fit: BoxFit.contain,
             )

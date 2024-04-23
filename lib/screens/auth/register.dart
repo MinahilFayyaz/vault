@@ -154,9 +154,14 @@ final screenHeight = MediaQuery.of(context).size.height;
                         mainAxisSpacing: 16.0,
                         crossAxisSpacing: 1.0,
                         children: List.generate(
-                          11, // Increase by 1 to include the cancel button
+                          12, // Increase by 1 to include the cancel button
                               (index) {
-                            if (index == 9) {
+                                if (index == 9) {
+                                  // Leave the 9th index empty
+                                  return Container();
+                                }
+
+                                else if (index == 10) {
                               // Add the 0 button as the 9th element in the grid view
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -178,7 +183,8 @@ final screenHeight = MediaQuery.of(context).size.height;
                                   ),
                                 ),
                               );
-                            } else if (index == 10) {
+                            }
+                                else if (index == 11) {
                               // Add a cancel button as the 10th element in the grid view
                               return Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 8.0),

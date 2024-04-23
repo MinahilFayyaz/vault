@@ -55,6 +55,9 @@ dependencies:
   flutter_dynamic_icon:
   archive:
   share_plus:
+  video_thumbnail:
+  video_player:
+  chewie:
 
 
 dev_dependencies:

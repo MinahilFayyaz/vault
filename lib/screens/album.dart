@@ -1,15 +1,17 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../consts/consts.dart';
 import 'gallery.dart';
 import 'imagepreview.dart';
 
-class FolderContentsPage extends StatelessWidget {
+class FolderContentsPage extends StatefulWidget {
   final String? folderName;
   final List<File>? folderContents;  // Images from homepage
   final Function(List<File>)? updateFolderContents;
@@ -21,6 +23,11 @@ class FolderContentsPage extends StatelessWidget {
     required this.folderContents,
   }) : super(key: key);
 
+  @override
+  State<FolderContentsPage> createState() => _FolderContentsPageState();
+}
+
+class _FolderContentsPageState extends State<FolderContentsPage> {
   Future<List<File>> retrieveAndCombineImages() async {
     // Retrieve images from the Hive database
     final databaseImages = await retrieveImagesFromHive();
@@ -32,10 +39,10 @@ class FolderContentsPage extends StatelessWidget {
     }
 
     // Check and save new images from folderContents to the Hive database
-    for (var file in folderContents!) {
+    for (var file in widget.folderContents!) {
       if (!databaseImagePaths.contains(file.path)) {
         // Save the new image to the Hive database
-        await saveImageToHive(file, folderName!);
+        await saveImageToHive(file, widget.folderName!);
       }
     }
 
@@ -69,41 +76,17 @@ class FolderContentsPage extends StatelessWidget {
     await saveImageToHive(newImage, folderName);
 
     // Update the folder contents list
-    folderContents!.add(newImage);
+    widget.folderContents!.add(newImage);
 
     // Notify the parent widget to update the UI
-    if (updateFolderContents != null) {
-      updateFolderContents!(folderContents!);
+    if (widget.updateFolderContents != null) {
+      widget.updateFolderContents!(widget.folderContents!);
     }
   }
 
-
-  // Method to retrieve images from Hive
-  // Future<List<File>> retrieveImagesFromHive() async {
-  //   final box = await Hive.openBox('myBox');
-  //   List<File> retrievedImages = [];
-  //
-  //   // Iterate through the keys in the box
-  //   for (var key in box.keys) {
-  //     final value = box.get(key);
-  //     if (value is Uint8List) {
-  //       // Create a temporary directory and save the image file
-  //       final tempDir = await getTemporaryDirectory();
-  //       final fileName = '$key.png';
-  //       final filePath = '${tempDir.path}/$fileName';
-  //       final file = File(filePath);
-  //       await file.writeAsBytes(value);
-  //       retrievedImages.add(file);
-  //     }
-  //   }
-  //   return retrievedImages;
-  // }
-
-
-  // Method to retrieve images from a specific folder name Hive box
   Future<List<File>> retrieveImagesFromHive() async {
     // Open the Hive box for the specified folder
-    final box = await Hive.openBox(folderName!);
+    final box = await Hive.openBox(widget.folderName!);
     List<File> retrievedImages = [];
 
     // Iterate through the keys in the box
@@ -123,6 +106,103 @@ class FolderContentsPage extends StatelessWidget {
     return retrievedImages;
   }
 
+  Future<void> _showAddFilesDialog(BuildContext context) async {
+    // Show the dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return Stack(
+          children: [
+            // Transparent background
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).pop(); // Dismiss the dialog on tap
+              },
+              child: Container(
+                width: 375,
+                height: 812,
+                decoration: BoxDecoration(
+                  //color: Colors.black.withOpacity(0.800000011920929),
+                ),
+              )
+            ),
+            // Centered dialog
+            Align(
+              alignment: Alignment.topCenter,
+              child: Dialog(
+                backgroundColor: Colors.black.withOpacity(0.800000011920929),
+                child: Container(
+                  width: 375,
+                  height: 812,
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset('assets/Layer 88.svg'),
+                      Center(
+                        child: Text(
+                          'Add Files',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          'You can add Photos and Videos to\nthe album by tapping +',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  //void initState() {
+  //   super.initState();
+  //   // Show the dialog when the album screen first starts
+  //   WidgetsBinding.instance!.addPostFrameCallback((_) {
+  //     _showAddFilesDialog(context);
+  //   });
+  // }
+
+  void initState() {
+    super.initState();
+    // Show the dialog only when the app is first launched
+    _checkFirstLaunch();
+    //_showAddFilesDialog(context);
+  }
+
+  void _checkFirstLaunch() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isFirstLaunch = prefs.getBool('first_launch') ?? true;
+
+    if (isFirstLaunch) {
+      // Set the flag to false to indicate that the dialog has been shown
+      prefs.setBool('first_launch', false);
+      // Show the dialog
+      WidgetsBinding.instance!.addPostFrameCallback((_) {
+        _showAddFilesDialog(context);
+      });
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +217,7 @@ class FolderContentsPage extends StatelessWidget {
               ? Color(0xFFFFFFFF) // Color for light theme
               : Consts.FG_COLOR,
           title: Text(
-            folderName!,
+            widget.folderName!,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w400,
@@ -148,7 +228,7 @@ class FolderContentsPage extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => GalleryScreen(folderName: folderName)));
+                    builder: (context) => GalleryScreen(folderName: widget.folderName)));
               },
               child: Padding(
                 padding: EdgeInsets.all(screenWidth * 0.02),
@@ -226,10 +306,10 @@ class FolderContentsPage extends StatelessWidget {
                               imageName: imageFile.path.split('/').last,
                               onImageRemoved: (removedImage) {
                                 // Remove the removed image from the combinedImages list
-                                updateFolderContents!(
+                                widget.updateFolderContents!(
                                     combinedImages.where((image) => image != removedImage).toList()
                                 );
-                              }, folderName: folderName,
+                              }, folderName: widget.folderName,
                             ),
                           ),
                         );
