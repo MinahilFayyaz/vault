@@ -724,20 +724,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         // Open the Hive box
         final box = await Hive.openBox(widget.folderName ?? 'defaultFolderName'); // Provide a default folder name if widget.folderName is null
 
-        final entryKey = box.keys.firstWhere(
-              (key) => box.get(key) == widget.imageFile.path,
-          orElse: () => null,
-        );
-
-        if (entryKey != null) {
-          print("entry key $entryKey");
-          await box.delete(entryKey);
-        }
-
-        // Find the key associated with the file path
         String? keyToRemove;
         for (var key in box.keys) {
-          print("key to remove $keyToRemove $entryKey");
+          print("key to remove $keyToRemove");
           final value = box.get(key);
           final filePath = '${(await getTemporaryDirectory()).path}/$key.png';
           if (value is Uint8List && filePath == widget.imageFile.path) {
@@ -745,7 +734,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             break;
           }
           else {
-            print("key to remove $keyToRemove $entryKey");
+            print("key to remove $keyToRemove ");
           }
         }
 
