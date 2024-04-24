@@ -12,52 +12,6 @@ import '../consts/consts.dart';
 import 'gallerydatabaseretrieve.dart';
 import 'imagepreview.dart';
 
-class VideoPlayerWidget extends StatefulWidget {
-  final File file;
-
-  const VideoPlayerWidget({Key? key, required this.file}) : super(key: key);
-
-  @override
-  _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
-}
-
-class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  late VideoPlayerController _controller;
-  late Future<void> _initializeVideoPlayerFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.file(widget.file);
-    _initializeVideoPlayerFuture = _controller.initialize();
-    _controller.setLooping(true); // Optional: Set looping if needed
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: _initializeVideoPlayerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
-            );
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        },
-    );
-  }
-}
-
-
 class GalleryScreen extends StatefulWidget {
   final String? folderName;
 
@@ -132,7 +86,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   if (snapshot.connectionState == ConnectionState.done) {
                     final file = snapshot.data;
                     if (file != null) {
-                      return _buildImageWidget(file);
+                      return _buildImageWidget(file, asset.type);
                     }
                   }
                   return const Center(child: CircularProgressIndicator());
@@ -179,35 +133,37 @@ class _GalleryScreenState extends State<GalleryScreen> {
         final imageName = file.path
             .split('/')
             .last;
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => ImagePreviewScreen(imageFile: file,
-        //       imageName: imageName,
-        //       folderName: '',),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ImagePreviewScreen(imageFile: file,
+              imageName: imageName,
+              folderName: '',),
+          ),
+        );
+      } else if (asset.type == AssetType.video) {
+        print("video : $file");
+        final videoName = file!.path.split('/').last;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ImagePreviewScreen(imageFile: file,
+              imageName: videoName,
+              folderName: '',),
+          ),
+        );
       }
     }
-    else if (asset.type == AssetType.video) {
-      final videoName = file!.path.split('/').last;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImagePreviewScreen(imageFile: file,
-            imageName: videoName,
-            folderName: '',),
-        ),
-      );
-    }
+
   }
 
-  Widget _buildImageWidget(File file) {
+  Widget _buildImageWidget(File file, AssetType type) {
     final String filePath = file.path.toLowerCase();
     if (filePath.endsWith('.mp4') || filePath.endsWith('.mov')) {
-      // If it's a video file, return a video player widget
+      print('file path : $type');// If it's a video file, return a video player widget
       return _buildVideoWidget(file);
     } else {
+      print('file path : $type');
       // If it's an image file, load it as an image
       return FutureBuilder(
         future: file.readAsBytes(),
@@ -256,6 +212,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
     return thumbnail;
   }
 
+
+  Future<Uint8List> _getVideoBytes(String filePath) async {
+    File file = File(filePath);
+    return await file.readAsBytes();
+  }
+
   Future<void> saveSelectedImagesToDatabase() async {
     int selectedImageCount = _isSelected.where((isSelected) => isSelected).length;
     print('Number of selected images: $selectedImageCount');
@@ -271,20 +233,41 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     for (int i = 0; i < _images.length; i++) {
       if (_isSelected[i]) {
-        Uint8List imageBytes = await _getImageBytes(selectedImagePaths[i]);
 
-        print('Image bytes at index $i: ${imageBytes.length}');
-        if (imageBytes.isNotEmpty) {
+        final String mediaPath = selectedImagePaths[i];
+        print('Media path at index $i: $mediaPath');
+
+        // Determine the type of media based on file extension
+        String extension = mediaPath.split('.').last.toLowerCase();
+        if (extension == 'mp4' || extension == 'mov') {
+          // It's a video file
+          print('Saving video at index $i...');
           try {
-            await hiveService.storeImage(imageBytes, widget.folderName!);
-            print('Image $i saved successfully');
+            Uint8List videoBytes = await _getVideoBytes(mediaPath);
+            await hiveService.storeVideo(mediaPath, widget.folderName!);
+            print('Video at index $i saved successfully');
           } catch (error) {
-            print('Failed to save image $i: $error');
+            print('Failed to save video at index $i: $error');
             allImagesSaved = false;
           }
-        } else {
-          print('Image bytes at index $i are empty');
-          allImagesSaved = false;
+        }
+
+        else{
+          Uint8List imageBytes = await _getImageBytes(selectedImagePaths[i]);
+
+          print('Image bytes at index $i: ${imageBytes.length}');
+          if (imageBytes.isNotEmpty) {
+            try {
+              await hiveService.storeImage(imageBytes, widget.folderName!);
+              print('Image $i saved successfully');
+            } catch (error) {
+              print('Failed to save image $i: $error');
+              allImagesSaved = false;
+            }
+          } else {
+            print('Image bytes at index $i are empty');
+            allImagesSaved = false;
+          }
         }
       }
     }
@@ -348,6 +331,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 setState(() {
                   _isSelected[index] = !_isSelected[index];
                   selectedCount += _isSelected[index] ? 1 : -1;
+
                 });
               },
               child: Stack(
@@ -414,6 +398,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     // Create a temporary list to hold the paths
     List<String> tempImagePaths = [];
+    List<AssetType> tempImageTypes = [];
 
     // Iterate over each image and collect paths
     for (int i = 0; i < _images.length; i++) {
@@ -435,7 +420,17 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
           // Check if the file is not null and add its path to the list
           if (file != null) {
-            tempImagePaths.add(file.path);
+            print('file ${file}');
+            if (file.path.toLowerCase().endsWith('.mp4') || file.path.toLowerCase().endsWith('.mov')) {
+              print('file ends with mp4 ${file.path}');
+              // If it's a video, add its path directly
+              tempImagePaths.add(file.path);
+            } else {
+              print('file ends with jpg ${file.path}');
+              // If it's an image, add its path after converting to bytes
+              Uint8List bytes = await file.readAsBytes();
+              tempImagePaths.add(file.path);
+            }
           }
         }
       }
@@ -596,32 +591,51 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 }
 
-
 class HiveService {
+
   Future<void> storeImage(dynamic media, String folderName) async {
     print('Storing media in the database...');
     var box = await Hive.openBox(folderName);
 
     var key = DateTime.now().millisecondsSinceEpoch.toString();
 
+    print('media : $media');
     if (media is Uint8List) {
+      print('Uint8list media');
       // If media is image bytes, store directly
       await box.put(key, media);
       print('Image stored in database with key $key');
     } else if (media is String) {
+      print('string media');
       // If media is video file path, read file and store bytes
-      try {
-        File file = File(media);
-        Uint8List videoBytes = await file.readAsBytes();
-        await box.put(key, videoBytes);
-        print('Video stored in database with key $key');
-      } catch (error) {
-        print('Error storing video in database: $error');
+      if (media.toLowerCase().endsWith('.mp4') || media.toLowerCase().endsWith('.mov')) {
+        print('mp4 media');
+        try {
+          File file = File(media);
+          Uint8List videoBytes = await file.readAsBytes();
+          await box.put(key, videoBytes);
+          print('Video stored in database with key $key');
+        } catch (error) {
+          print('Error storing video in database: $error');
+        }
+      } else {
+        print('Unsupported media type');
       }
     } else {
       print('Unsupported media type');
     }
   }
+  Future<void> storeVideo(String filePath, String folderName) async {
+    print('Storing video in the database...');
+    var box = await Hive.openBox(folderName);
+
+    var key = DateTime.now().millisecondsSinceEpoch.toString();
+     try{
+
+          await box.put(key, filePath);
+          print('Video stored in database with key $key');
+        } catch (error) {
+          print('Error storing video in database: $error');
+        }
+  }
 }
-
-

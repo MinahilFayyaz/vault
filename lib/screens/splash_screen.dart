@@ -74,11 +74,9 @@ class SplashScreen extends StatelessWidget {
                           ),
                           CustomButton(
                             ontap: () {
-                              print('SplashScreen Widget Start');
                               final onBoardingProvider = Provider.of<OnBoardingProvider>(context, listen: false);
                               onBoardingProvider.checkOnBoardingStatus();
                               final isOnBoardingComplete = onBoardingProvider.isBoardingCompleate;
-                              print('Is OnBoarding Complete: $isOnBoardingComplete');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

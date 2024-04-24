@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../consts/consts.dart';
 import 'gallery.dart';
@@ -28,6 +29,9 @@ class FolderContentsPage extends StatefulWidget {
 }
 
 class _FolderContentsPageState extends State<FolderContentsPage> {
+
+
+
   Future<List<File>> retrieveAndCombineImages() async {
     // Retrieve images from the Hive database
     final databaseImages = await retrieveImagesFromHive();
@@ -55,6 +59,15 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     return combinedImages;
   }
 
+  Future<Uint8List?> generateVideoThumbnail(String videoPath) async {
+    final thumbnailPath = await VideoThumbnail.thumbnailData(
+      video: videoPath,
+      imageFormat: ImageFormat.JPEG,
+      // Adjust thumbnail size as needed
+      quality: 100, // Adjust thumbnail quality as needed
+    );
+    return thumbnailPath;
+  }
   // Method to save an image file to Hive
   Future<void> saveImageToHive(File imageFile, String folderName) async {
     // Open the Hive box for the specified folder
@@ -68,6 +81,15 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
 
     // Store the image bytes in the box
     await box.put(key, imageBytes);
+  }
+
+// Method to delete media (both images and videos) from Hive
+  Future<void> deleteMediaFromHive(String mediaPath) async {
+    // Open the Hive box for the specified folder
+    final box = await Hive.openBox(widget.folderName!);
+
+    // Remove the entry corresponding to the media path
+    await box.delete(mediaPath);
   }
 
 // Method to handle adding a new image
@@ -92,7 +114,9 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     // Iterate through the keys in the box
     for (var key in box.keys) {
       final value = box.get(key);
+      print('Key: $key, Value: $value');
       if (value is Uint8List) {
+        print('value is uint8list');
         // Create a temporary directory and save the image file
         final tempDir = await getTemporaryDirectory();
         final fileName = '$key.png';
@@ -100,6 +124,10 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
         final file = File(filePath);
         await file.writeAsBytes(value);
         retrievedImages.add(file);
+      }  else if (value is String) {
+        // Assume it's a video file path
+        print('value is string');
+        retrievedImages.add(File(value));
       }
     }
 
@@ -173,18 +201,11 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     );
   }
 
-  //void initState() {
-  //   super.initState();
-  //   // Show the dialog when the album screen first starts
-  //   WidgetsBinding.instance!.addPostFrameCallback((_) {
-  //     _showAddFilesDialog(context);
-  //   });
-  // }
-
   void initState() {
     super.initState();
     // Show the dialog only when the app is first launched
     _checkFirstLaunch();
+    retrieveAndCombineImages();
     //_showAddFilesDialog(context);
   }
 
@@ -202,6 +223,32 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     }
   }
 
+
+  Future<List<dynamic>> retrieveMediaFromHive() async {
+    // Open the Hive box for the specified folder
+    final box = await Hive.openBox(widget.folderName!);
+    List<dynamic> retrievedMedia = [];
+
+    // Iterate through the keys in the box
+    for (var key in box.keys) {
+      final value = box.get(key);
+      if (value is Uint8List) {
+        // Assume it's an image
+        // Create a temporary directory and save the image file
+        final tempDir = await getTemporaryDirectory();
+        final fileName = '$key.png';
+        final filePath = '${tempDir.path}/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(value);
+        retrievedMedia.add(file);
+      } else if (value is String) {
+        // Assume it's a video file path
+        retrievedMedia.add(value);
+      }
+    }
+
+    return retrievedMedia;
+  }
 
 
   @override
@@ -250,17 +297,15 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           ],
         ),
       ),
-      body: FutureBuilder<List<File>>(
-        future: retrieveAndCombineImages(),
+      body: FutureBuilder<List<dynamic>>(
+        future: retrieveMediaFromHive(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Show a loading indicator while data is loading
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
-            List<File> combinedImages = snapshot.data!;
+            List<dynamic> combinedMedia = snapshot.data!;
 
-            // If there are no files, display a "No File Found" message
-            if (combinedImages.isEmpty) {
+            if (combinedMedia.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -286,52 +331,104 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 ),
               );
             } else {
-              // Display the images in a grid view
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   crossAxisSpacing: 3,
                   mainAxisSpacing: 3,
                 ),
-                itemCount: combinedImages.length,
-                  itemBuilder: (context, index) {
-                    final imageFile = combinedImages[index];
+                itemCount: combinedMedia.length,
+                itemBuilder: (context, index) {
+                  final media = combinedMedia[index];
+                  if (media is File) {
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ImagePreviewScreen(
-                              imageFile: imageFile,
-                              imageName: imageFile.path.split('/').last,
-                              onImageRemoved: (removedImage) {
-                                // Remove the removed image from the combinedImages list
-                                widget.updateFolderContents!(
-                                    combinedImages.where((image) => image != removedImage).toList()
-                                );
-                              }, folderName: widget.folderName,
+                              imageFile: media,
+                              imageName: media.path.split('/').last,
+                              onImageRemoved: (removedMedia) async {
+                                setState(() {
+                                  combinedMedia.removeWhere((item) {
+                                    if (item is File) {
+                                      return item == removedMedia;
+                                    } else if (item is String) {
+                                      return item == removedMedia.path;
+                                    }
+                                    return false;
+                                  });
+                                });
+
+                                // Delete the media from the database
+                                if (removedMedia is File) {
+                                  await deleteMediaFromHive(removedMedia.path);
+                                }
+                              },
+
+                              folderName: widget.folderName,
                             ),
                           ),
                         );
                       },
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16.0,
-                        horizontal: 16),
+                        padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.file(
-                            imageFile,
+                            media,
                             fit: BoxFit.cover,
                           ),
                         ),
                       ),
                     );
+                  } else if (media is String) {
+                    return FutureBuilder<Uint8List?>(
+                      future: generateVideoThumbnail(media),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Container(
+                            color: Colors.grey,
+                          );
+                        } else if (snapshot.hasData) {
+                          return GestureDetector(
+                            onTap: () {
+                              final videoName = media.split('/').last;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ImagePreviewScreen(
+                                    imageFile: File(media), // Replace 'file' with 'media'
+                                    imageName: videoName,
+                                    folderName: '',
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.memory(
+                                  snapshot.data!,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          );
+                        } else {
+                          return Container();
+                        }
+                      },
+                    );
+                  } else {
+                    return Container();
                   }
-
+                },
               );
             }
           } else {
-            // Display a message if there was an error or data isn't available
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

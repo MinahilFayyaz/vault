@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
@@ -8,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:vault/screens/album.dart';
 import 'package:vault/screens/homepage.dart';
 import 'package:vault/widgets/custombutton.dart';
+import 'package:video_player/video_player.dart';
 import '../consts/consts.dart';
 import 'package:image/image.dart' as img;
 
@@ -34,7 +36,6 @@ class ImagePreviewScreen extends StatefulWidget {
 
 class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   int _selectedIndex = 0;
-
 
   Future<Map<String, dynamic>> getImageProperties() async {
     // Load the image using the image package
@@ -492,6 +493,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     // Combine the short file name with the file extension
     String shortImageName = '$shortFileName.$fileExtension';
 
+    print('file extension ${fileExtension.toLowerCase()}');
+    print('video file ${widget.imageFile}');
+
     return Scaffold(
       //backgroundColor: Consts.BG_COLOR,
       appBar: PreferredSize(
@@ -532,7 +536,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         padding: EdgeInsets.all(screenWidth * 0.04),
         child: Center(
             child: fileExtension.toLowerCase() == 'mp4' || fileExtension.toLowerCase() == 'mov'
-           ? VideoPlayerWidget(file: widget.imageFile)
+              ? VideoPlayerWidget(file: widget.imageFile)
               : Image.file(
                 widget.imageFile,
               fit: BoxFit.contain,
@@ -716,18 +720,32 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       try {
         // Delete the file
         await widget.imageFile.delete();
-
+        print('Video file path before deletion: ${widget.imageFile.path}');
         // Open the Hive box
         final box = await Hive.openBox(widget.folderName ?? 'defaultFolderName'); // Provide a default folder name if widget.folderName is null
+
+        final entryKey = box.keys.firstWhere(
+              (key) => box.get(key) == widget.imageFile.path,
+          orElse: () => null,
+        );
+
+        if (entryKey != null) {
+          print("entry key $entryKey");
+          await box.delete(entryKey);
+        }
 
         // Find the key associated with the file path
         String? keyToRemove;
         for (var key in box.keys) {
+          print("key to remove $keyToRemove $entryKey");
           final value = box.get(key);
           final filePath = '${(await getTemporaryDirectory()).path}/$key.png';
           if (value is Uint8List && filePath == widget.imageFile.path) {
             keyToRemove = key;
             break;
+          }
+          else {
+            print("key to remove $keyToRemove $entryKey");
           }
         }
 
@@ -741,10 +759,14 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           widget.onImageRemoved!(widget.imageFile);
         }
 
+        print('Video file path after deletion: ${widget.imageFile.path}');
         // Notify the user that the image has been deleted
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Image unlocked successfully.'))
         );
+
+        print('Image deleted successfully.');
+
         Navigator.push(context,
             MaterialPageRoute(builder: (context) =>
                 HomePage()));
@@ -759,3 +781,71 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   }
 
 }
+
+
+class VideoPlayerWidget extends StatefulWidget {
+  final File file;
+
+  const VideoPlayerWidget({Key? key, required this.file}) : super(key: key);
+
+  @override
+  _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
+}
+
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
+  late VideoPlayerController videoPlayerController;
+  late Future<void> _initializeVideoPlayerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    videoPlayerController = VideoPlayerController.file(widget.file);
+    _initializeVideoPlayerFuture = videoPlayerController.initialize();
+  }
+
+  @override
+  void dispose() {
+    videoPlayerController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: FutureBuilder(
+        future: _initializeVideoPlayerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Center(
+              child: AspectRatio(
+                aspectRatio: videoPlayerController.value.aspectRatio,
+                child: VideoPlayer(videoPlayerController),
+              ),
+            );
+          } else {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            if (videoPlayerController.value.isPlaying) {
+              videoPlayerController.pause();
+            } else {
+              videoPlayerController.play();
+            }
+          });
+        },
+        child: Icon(
+          videoPlayerController.value.isPlaying
+              ? Icons.pause
+              : Icons.play_arrow,
+        ),
+      ),
+    );
+  }
+}
+

@@ -63,6 +63,8 @@
 	<string>Upload image from camera for screen background</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Post videos to profile</string>
+	<key>NSAppTransportSecurity</key>
+    <string>Post videos to profile</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
