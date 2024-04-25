@@ -728,8 +728,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         for (var key in box.keys) {
           print("key to remove $keyToRemove");
           final value = box.get(key);
-          final filePath = '${(await getTemporaryDirectory()).path}/$key.png';
-          if (value is Uint8List && filePath == widget.imageFile.path) {
+          // final filePath = '${(await getTemporaryDirectory()).path}/$key.png';
+          if (value is Uint8List
+              // && filePath == widget.imageFile.path
+          ) {
             keyToRemove = key;
             break;
           }
@@ -756,9 +758,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
         print('Image deleted successfully.');
 
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) =>
-                HomePage()));
+        Navigator.pop(context);
+        // Navigator.push(context,
+        //     MaterialPageRoute(builder: (context) =>
+        //         HomePage()));
       } catch (e) {
         // Handle any errors that may occur during the deletion
         print('Error deleting image file: $e');

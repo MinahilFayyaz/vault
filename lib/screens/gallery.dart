@@ -30,7 +30,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
   List<AssetPathEntity> albums = [];
   List<String> selectedImagePaths = [];
 
-
   @override
   void initState() {
     super.initState();
@@ -38,7 +37,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 
   Future<void> _fetchGallery() async {
-    final PermissionState permissionState = await PhotoManager.requestPermissionExtend();
+    final PermissionState permissionState =
+        await PhotoManager.requestPermissionExtend();
     if (permissionState.isAuth) {
       _fetchImages();
     } else {
@@ -70,7 +70,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
     albums = await PhotoManager.getAssetPathList(onlyAll: true);
     print('albums $albums');
     if (albums.isNotEmpty) {
-      List<AssetEntity> media = await albums[0].getAssetListPaged(size: 60, page: currentPage);
+      List<AssetEntity> media =
+          await albums[0].getAssetListPaged(size: 60, page: currentPage);
       print('album[0]: ${albums[0]}');
       List<Widget> tempImages = [];
       List<bool> tempSelected = [];
@@ -79,7 +80,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
         if (asset.type == AssetType.image || asset.type == AssetType.video) {
           tempImages.add(
             GestureDetector(
-              onTap: () => _onImageTap(asset),
+              // onTap: () => _onImageTap(asset),
               child: FutureBuilder(
                 future: asset.file,
                 builder: (BuildContext context, AsyncSnapshot<File?> snapshot) {
@@ -130,15 +131,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
     final file = await asset.file;
     if (file != null) {
       if (asset.type == AssetType.image) {
-        final imageName = file.path
-            .split('/')
-            .last;
+        final imageName = file.path.split('/').last;
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ImagePreviewScreen(imageFile: file,
+            builder: (context) => ImagePreviewScreen(
+              imageFile: file,
               imageName: imageName,
-              folderName: '',),
+              folderName: '',
+            ),
           ),
         );
       } else if (asset.type == AssetType.video) {
@@ -147,35 +148,37 @@ class _GalleryScreenState extends State<GalleryScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ImagePreviewScreen(imageFile: file,
+            builder: (context) => ImagePreviewScreen(
+              imageFile: file,
               imageName: videoName,
-              folderName: '',),
+              folderName: '',
+            ),
           ),
         );
       }
     }
-
   }
 
   Widget _buildImageWidget(File file, AssetType type) {
     final String filePath = file.path.toLowerCase();
     if (filePath.endsWith('.mp4') || filePath.endsWith('.mov')) {
-      print('file path : $type');// If it's a video file, return a video player widget
+      print(
+          'file path : $type'); // If it's a video file, return a video player widget
       return _buildVideoWidget(file);
     } else {
       print('file path : $type');
       // If it's an image file, load it as an image
       return FutureBuilder(
         future: file.readAsBytes(),
-        builder: (BuildContext context, AsyncSnapshot<Uint8List> bytesSnapshot) {
+        builder:
+            (BuildContext context, AsyncSnapshot<Uint8List> bytesSnapshot) {
           if (bytesSnapshot.connectionState == ConnectionState.done) {
             final bytes = bytesSnapshot.data;
             if (bytes != null) {
               return Container(
                   width: 100, // Set a fixed width for the image
                   height: 100,
-                  child: Image.memory(bytes, fit: BoxFit.cover)
-              );
+                  child: Image.memory(bytes, fit: BoxFit.cover));
             }
           }
           return const Center(child: CircularProgressIndicator());
@@ -188,7 +191,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
     return FutureBuilder(
       future: _generateThumbnail(file),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done && snapshot.data != null) {
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.data != null) {
           final Uint8List thumbnailBytes = snapshot.data as Uint8List;
           return Image.memory(
             thumbnailBytes,
@@ -212,14 +216,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
     return thumbnail;
   }
 
-
   Future<Uint8List> _getVideoBytes(String filePath) async {
     File file = File(filePath);
     return await file.readAsBytes();
   }
 
   Future<void> saveSelectedImagesToDatabase() async {
-    int selectedImageCount = _isSelected.where((isSelected) => isSelected).length;
+    int selectedImageCount =
+        _isSelected.where((isSelected) => isSelected).length;
     print('Number of selected images: $selectedImageCount');
 
     print('Saving selected images to the database...');
@@ -230,10 +234,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
       return;
     }
 
-
-    for (int i = 0; i < _images.length; i++) {
-      if (_isSelected[i]) {
-
+    for (int i = 0; i < selectedImagePaths.length; i++) {
+      // if (_isSelected[i]) {
         final String mediaPath = selectedImagePaths[i];
         print('Media path at index $i: $mediaPath');
 
@@ -250,9 +252,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             print('Failed to save video at index $i: $error');
             allImagesSaved = false;
           }
-        }
-
-        else{
+        } else {
           Uint8List imageBytes = await _getImageBytes(selectedImagePaths[i]);
 
           print('Image bytes at index $i: ${imageBytes.length}');
@@ -269,13 +269,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
             allImagesSaved = false;
           }
         }
-      }
+      // }
     }
+
+    selectedImagePaths.clear();
 
     if (allImagesSaved) {
       _showSnackBar('All selected images have been saved to the database.');
       //_openSavedImagesScreen();
-
     } else {
       _showSnackBar('Some images have not been saved to the database.');
     }
@@ -308,8 +309,54 @@ class _GalleryScreenState extends State<GalleryScreen> {
     );
   }
 
+  addImageToSelectedImages(Widget widget, bool isSelected) async {
+    print('MK: isSelected: $isSelected for ${selectedImagePaths.length}');
+    // Create a temporary list to hold the paths
+
+    // Check if the widget is a GestureDetector
+    if (widget is GestureDetector) {
+      // Extract the child widget from GestureDetector
+      final child = widget.child;
+
+      // Check if the child is a FutureBuilder
+      if (child is FutureBuilder) {
+        // Retrieve the future from the FutureBuilder
+        final future = child.future;
+
+        // Await the future to get the file
+        final file = await future;
+
+        // Check if the file is not null and add its path to the list
+        if (file != null) {
+          print('file ${file}');
+          if (file.path.toLowerCase().endsWith('.mp4') ||
+              file.path.toLowerCase().endsWith('.mov')) {
+            print('file ends with mp4 ${file.path}');
+            // If it's a video, add its path directly
+            // selectedImagePaths.add(file.path);
+          } else {
+            print('file ends with jpg ${file.path}');
+            // If it's an image, add its path after converting to bytes
+            Uint8List bytes = await file.readAsBytes();
+          }
+          if (isSelected) {
+            selectedImagePaths.add(file.path);
+          } else if (selectedImagePaths.contains(file.path)) {
+            selectedImagePaths.remove(file.path);
+          }
+        }
+      }
+    }
+
+    // Update state with the collected paths
+    setState(() {
+      selectedImagePaths = selectedImagePaths;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    print('MK: selectedImagePaths: $selectedImagePaths');
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.light
@@ -331,14 +378,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 setState(() {
                   _isSelected[index] = !_isSelected[index];
                   selectedCount += _isSelected[index] ? 1 : -1;
-
                 });
+                addImageToSelectedImages(_images[index], _isSelected[index]);
               },
               child: Stack(
                 children: [
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0,
-                        vertical: 16),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: _images[index],
@@ -357,8 +404,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 ],
               ),
             );
-          }
-      ),
+          }),
       bottomNavigationBar: BottomNavigationBar(
         onTap: (index) {
           if (index == 0) {
@@ -421,7 +467,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
           // Check if the file is not null and add its path to the list
           if (file != null) {
             print('file ${file}');
-            if (file.path.toLowerCase().endsWith('.mp4') || file.path.toLowerCase().endsWith('.mov')) {
+            if (file.path.toLowerCase().endsWith('.mp4') ||
+                file.path.toLowerCase().endsWith('.mov')) {
               print('file ends with mp4 ${file.path}');
               // If it's a video, add its path directly
               tempImagePaths.add(file.path);
@@ -469,8 +516,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
                                 width: 70.0,
                                 height: 40.0,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).brightness == Brightness.light
-                                      ? Color(0xFFF5F5F5) // Color for light theme
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? Color(
+                                          0xFFF5F5F5) // Color for light theme
                                       : Consts.FG_COLOR,
                                   shape: BoxShape.circle,
                                 ),
@@ -480,12 +529,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
                                 child: ClipOval(
                                   child: ColorFiltered(
                                     colorFilter: ColorFilter.mode(
-                                        Theme.of(context).brightness == Brightness.light
-                                            ? Colors.black // Color for light theme
+                                        Theme.of(context).brightness ==
+                                                Brightness.light
+                                            ? Colors
+                                                .black // Color for light theme
                                             : Colors.white,
                                         BlendMode.srcIn),
                                     child: SvgPicture.asset(
-                                      'assets/Group.svg', // Replace with the path to your image
+                                      'assets/Group.svg',
+                                      // Replace with the path to your image
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -502,8 +554,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           children: [
                             Text(
                               'Move In',
-                              style: const TextStyle(fontSize: 18,
-                                  fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
@@ -513,18 +565,19 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 25.0,
-                    vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       'Are you sure you want to move\n$selectedCount item(s)in the GalleryVault?',
-                      style: TextStyle(fontSize: 16,
-                          color:  Theme.of(context).brightness == Brightness.light
-                              ? Color(0x7F222222)
-                              : Colors.white.withOpacity(0.5)),
+                      style: TextStyle(
+                          fontSize: 16,
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Color(0x7F222222)
+                                  : Colors.white.withOpacity(0.5)),
                     ),
                   ],
                 ),
@@ -543,7 +596,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)), // Set button size
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      // Set button size
                       backgroundColor: MaterialStateProperty.all(
                         Theme.of(context).brightness == Brightness.light
                             ? Color(0xFFF5F5F5) // Color for light theme
@@ -553,10 +607,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     child: Text(
                       'Cancel',
                       style: TextStyle(
-                          color: Theme.of(context).brightness == Brightness.light
-                              ? Color(0x7F222222)
-                              : Colors.white.withOpacity(0.5)
-                      ),
+                          color:
+                              Theme.of(context).brightness == Brightness.light
+                                  ? Color(0x7F222222)
+                                  : Colors.white.withOpacity(0.5)),
                     ),
                   ),
                   TextButton(
@@ -592,7 +646,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
 }
 
 class HiveService {
-
   Future<void> storeImage(dynamic media, String folderName) async {
     print('Storing media in the database...');
     var box = await Hive.openBox(folderName);
@@ -608,7 +661,8 @@ class HiveService {
     } else if (media is String) {
       print('string media');
       // If media is video file path, read file and store bytes
-      if (media.toLowerCase().endsWith('.mp4') || media.toLowerCase().endsWith('.mov')) {
+      if (media.toLowerCase().endsWith('.mp4') ||
+          media.toLowerCase().endsWith('.mov')) {
         print('mp4 media');
         try {
           File file = File(media);
@@ -625,17 +679,17 @@ class HiveService {
       print('Unsupported media type');
     }
   }
+
   Future<void> storeVideo(String filePath, String folderName) async {
     print('Storing video in the database...');
     var box = await Hive.openBox(folderName);
 
     var key = DateTime.now().millisecondsSinceEpoch.toString();
-     try{
-
-          await box.put(key, filePath);
-          print('Video stored in database with key $key');
-        } catch (error) {
-          print('Error storing video in database: $error');
-        }
+    try {
+      await box.put(key, filePath);
+      print('Video stored in database with key $key');
+    } catch (error) {
+      print('Error storing video in database: $error');
+    }
   }
 }

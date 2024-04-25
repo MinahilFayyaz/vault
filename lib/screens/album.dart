@@ -14,7 +14,7 @@ import 'imagepreview.dart';
 
 class FolderContentsPage extends StatefulWidget {
   final String? folderName;
-  final List<File>? folderContents;  // Images from homepage
+  final List<File>? folderContents; // Images from homepage
   final Function(List<File>)? updateFolderContents;
 
   const FolderContentsPage({
@@ -29,9 +29,6 @@ class FolderContentsPage extends StatefulWidget {
 }
 
 class _FolderContentsPageState extends State<FolderContentsPage> {
-
-
-
   Future<List<File>> retrieveAndCombineImages() async {
     // Retrieve images from the Hive database
     final databaseImages = await retrieveImagesFromHive();
@@ -68,6 +65,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     );
     return thumbnailPath;
   }
+
   // Method to save an image file to Hive
   Future<void> saveImageToHive(File imageFile, String folderName) async {
     // Open the Hive box for the specified folder
@@ -124,7 +122,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
         final file = File(filePath);
         await file.writeAsBytes(value);
         retrievedImages.add(file);
-      }  else if (value is String) {
+      } else if (value is String) {
         // Assume it's a video file path
         print('value is string');
         retrievedImages.add(File(value));
@@ -144,17 +142,16 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           children: [
             // Transparent background
             GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop(); // Dismiss the dialog on tap
-              },
-              child: Container(
-                width: 375,
-                height: 812,
-                decoration: BoxDecoration(
-                  //color: Colors.black.withOpacity(0.800000011920929),
-                ),
-              )
-            ),
+                onTap: () {
+                  Navigator.of(context).pop(); // Dismiss the dialog on tap
+                },
+                child: Container(
+                  width: 375,
+                  height: 812,
+                  decoration: BoxDecoration(
+                      //color: Colors.black.withOpacity(0.800000011920929),
+                      ),
+                )),
             // Centered dialog
             Align(
               alignment: Alignment.topCenter,
@@ -223,33 +220,46 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     }
   }
 
-
   Future<List<dynamic>> retrieveMediaFromHive() async {
     // Open the Hive box for the specified folder
     final box = await Hive.openBox(widget.folderName!);
     List<dynamic> retrievedMedia = [];
 
     // Iterate through the keys in the box
+    // Create a temporary directory and save the image file
+    final tempDir = await getTemporaryDirectory();
     for (var key in box.keys) {
       final value = box.get(key);
       if (value is Uint8List) {
         // Assume it's an image
-        // Create a temporary directory and save the image file
-        final tempDir = await getTemporaryDirectory();
         final fileName = '$key.png';
         final filePath = '${tempDir.path}/$fileName';
         final file = File(filePath);
         await file.writeAsBytes(value);
-        retrievedMedia.add(file);
-      } else if (value is String) {
+        // retrievedMedia.add(file);
+        // file.delete();
+        // await deleteMediaFromHive(file.path);
+        print('MK: image Exists: ${await file.exists()}');
+        if (await file.exists()) {
+          retrievedMedia.add(file);
+        } else {
+          print('MK: removing image ${value}');
+          await deleteMediaFromHive(file.path);
+        }
+      } else if ((value is String)) {
+        final file = File(value);
+        print('MK: is video Exists: ${key}');
         // Assume it's a video file path
-        retrievedMedia.add(value);
+        if (await file.exists()) {
+          retrievedMedia.add(value);
+        } else {
+          print('MK: removing video ${value}');
+          await deleteMediaFromHive(value);
+        }
       }
     }
-
-    return retrievedMedia;
+    return retrievedMedia.toSet().toList();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -274,8 +284,11 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           actions: [
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => GalleryScreen(folderName: widget.folderName)));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            GalleryScreen(folderName: widget.folderName)));
               },
               child: Padding(
                 padding: EdgeInsets.all(screenWidth * 0.02),
@@ -304,7 +317,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
             List<dynamic> combinedMedia = snapshot.data!;
-
             if (combinedMedia.isEmpty) {
               return Center(
                 child: Column(
@@ -331,6 +343,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 ),
               );
             } else {
+              print('MK: combinedMedia: ${combinedMedia.length} for $combinedMedia');
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
@@ -366,14 +379,14 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                                   await deleteMediaFromHive(removedMedia.path);
                                 }
                               },
-
                               folderName: widget.folderName,
                             ),
                           ),
                         );
                       },
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
+                        padding: EdgeInsets.symmetric(
+                            vertical: 16.0, horizontal: 16),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.file(
@@ -387,7 +400,8 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                     return FutureBuilder<Uint8List?>(
                       future: generateVideoThumbnail(media),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return Container(
                             color: Colors.grey,
                           );
@@ -399,7 +413,8 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ImagePreviewScreen(
-                                    imageFile: File(media), // Replace 'file' with 'media'
+                                    imageFile: File(media),
+                                    // Replace 'file' with 'media'
                                     imageName: videoName,
                                     folderName: '',
                                   ),
@@ -407,7 +422,8 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                               );
                             },
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 16.0, horizontal: 16),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.memory(
@@ -418,7 +434,10 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                             ),
                           );
                         } else {
-                          return Container();
+                          return Container(
+                            // height: 20, width: 20,
+                            color: Colors.red,
+                          );
                         }
                       },
                     );
