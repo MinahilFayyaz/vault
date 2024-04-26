@@ -187,6 +187,7 @@ class SettingsPage extends StatelessWidget {
         SnackBar(content: Text('All files exported successfully!')),
       );
     } catch (error) {
+      print('Failed to export files: $error');
       // Hide the progress dialog and show an error message
       Navigator.of(context).pop(); // Hide the progress dialog
       ScaffoldMessenger.of(context).showSnackBar(
