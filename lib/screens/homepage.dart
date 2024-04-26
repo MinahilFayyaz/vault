@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:image/image.dart' as img;
 import 'package:flutter/cupertino.dart';
@@ -204,14 +205,7 @@ class _HomePageState extends State<HomePage> {
                           : Color(0xFF585956),
                       borderRadius: BorderRadius.circular(screenHeight * 0.01),
                     ),
-                        child: Theme.of(context).brightness == Brightness.light
-                        ? SvgPicture.asset('assets/premium (3).svg')
-                            : ColorFiltered(
-                          colorFilter: ColorFilter.mode(
-                              Colors.white,
-                              BlendMode.srcIn),
-                          child: SvgPicture.asset('assets/premium (3).svg'),
-                    )
+                    child: SvgPicture.asset('assets/premium (3).svg'),
                   ),
                 ),
               ),
@@ -251,43 +245,24 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.02),
-                    Wrap(
-                      alignment: WrapAlignment.start,
-                      runAlignment: WrapAlignment.start,
-                      spacing: screenWidth * 0.02, // Add spacing between the containers
-                      runSpacing: screenHeight * 0.01, // Add spacing between the rows
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            String? folderName = await _showAddFolderDialog(context);
-                            if (folderName != null && folderName.isNotEmpty) {
-                              setState(() {
-                                folderNames.add(folderName); // Add the new folder to the list
-                                _saveFolderNames();
-                              });
-                            }
-                            //_navigateToFolderContents(folderName!);
-                          },
-                          child: Container(
-                            height: screenHeight * 0.13,
-                            width: screenWidth * 0.29,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.light
-                                  ? Color(0xFFF5F5F5) // Color for light theme
-                                  : Consts.FG_COLOR,
-                              borderRadius: BorderRadius.circular(screenHeight * 0.02),
-                            ),
-                            child: Icon(
-                              Icons.add,
-                              size: 30,
-                            ),
-                          ),
-                        ),
-                        // Dynamically generate containers for each folder name
-                        for (String folderName in folderNames)
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        alignment: WrapAlignment.start,
+                        runAlignment: WrapAlignment.start,
+                        spacing: screenWidth * 0.02, // Add spacing between the containers
+                        runSpacing: screenHeight * 0.01, // Add spacing between the rows
+                        children: [
                           GestureDetector(
-                            onTap: (){
-                              _navigateToFolderContents(folderName);
+                            onTap: () async {
+                              String? folderName = await _showAddFolderDialog(context);
+                              if (folderName != null && folderName.isNotEmpty) {
+                                setState(() {
+                                  folderNames.add(folderName); // Add the new folder to the list
+                                  _saveFolderNames();
+                                });
+                              }
+                              //_navigateToFolderContents(folderName!);
                             },
                             child: Container(
                               height: screenHeight * 0.13,
@@ -298,26 +273,48 @@ class _HomePageState extends State<HomePage> {
                                     : Consts.FG_COLOR,
                                 borderRadius: BorderRadius.circular(screenHeight * 0.02),
                               ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SvgPicture.asset('assets/46 Open File, Document, Folder.svg'),
-                                    SizedBox(height: screenHeight * 0.01),
-                                    Text(
-                                      folderName,
-                                      style: TextStyle(
-                                        //color: Colors.white,
-                                        fontSize: 12,
-                                        fontFamily: 'Gilroy', // Apply Gilroy font family
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              child: Icon(
+                                Icons.add,
+                                size: 30,
                               ),
                             ),
                           ),
-                      ],
+                          // Dynamically generate containers for each folder name
+                          for (String folderName in folderNames)
+                            GestureDetector(
+                              onTap: (){
+                                _navigateToFolderContents(folderName);
+                              },
+                              child: Container(
+                                height: screenHeight * 0.13,
+                                width: screenWidth * 0.29,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).brightness == Brightness.light
+                                      ? Color(0xFFF5F5F5) // Color for light theme
+                                      : Consts.FG_COLOR,
+                                  borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SvgPicture.asset('assets/46 Open File, Document, Folder.svg'),
+                                      SizedBox(height: screenHeight * 0.01),
+                                      Text(
+                                        folderName,
+                                        style: TextStyle(
+                                          //color: Colors.white,
+                                          fontSize: 12,
+                                          fontFamily: 'Gilroy', // Apply Gilroy font family
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
 
                     SizedBox(height: screenHeight * 0.01),
@@ -448,7 +445,9 @@ class _HomePageState extends State<HomePage> {
                         'Cancel',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? Color(0xFF666666)// Color for light theme
+                              : Color(0xFF999999),
                           fontSize: 14,
                           fontFamily: 'Gilroy',
                           fontWeight: FontWeight.w700,
@@ -458,47 +457,25 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Wrap(
-                  alignment: WrapAlignment.start,
-                  runAlignment: WrapAlignment.start,
-                  spacing: screenWidth * 0.02,
-                  runSpacing: screenHeight * 0.01,
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        String? folderName = await _showAddFolderDialog(context);
-                        if (folderName != null && folderName.isNotEmpty) {
-                          setState(() {
-                            folderNames.add(folderName);
-                            _saveFolderNames();
-                            // Copy the image to the selected folder
-                            _copyImageToFolder(image, folderName);
-                          });
-                        }
-                      },
-                      child: Container(
-                        height: screenHeight * 0.13,
-                        width: screenWidth * 0.29,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.light
-                              ? Color(0xFFE8E8E8) // Color for light theme
-                              : Consts.BG_COLOR,
-                          borderRadius: BorderRadius.circular(screenHeight * 0.02),
-                        ),
-                        child: Icon(
-                          Icons.add,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                    // Dynamically generate containers for each folder name
-                    for (String folderName in folderNames)
+                Container(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    alignment: WrapAlignment.start,
+                    runAlignment: WrapAlignment.start,
+                    spacing: screenWidth * 0.02,
+                    runSpacing: screenHeight * 0.01,
+                    children: [
                       GestureDetector(
-                        onTap: () {
-                          // Copy the image to the selected folder
-                          _copyImageToFolder(image, folderName);
-                          // Navigate to the folder contents page
-                          //_navigateToFolderContents(folderName);
+                        onTap: () async {
+                          String? folderName = await _showAddFolderDialog(context);
+                          if (folderName != null && folderName.isNotEmpty) {
+                            setState(() {
+                              folderNames.add(folderName);
+                              _saveFolderNames();
+                              // Copy the image to the selected folder
+                              _copyImageToFolder(image, folderName);
+                            });
+                          }
                         },
                         child: Container(
                           height: screenHeight * 0.13,
@@ -509,26 +486,51 @@ class _HomePageState extends State<HomePage> {
                                 : Consts.BG_COLOR,
                             borderRadius: BorderRadius.circular(screenHeight * 0.02),
                           ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SvgPicture.asset('assets/46 Open File, Document, Folder.svg'),
-                                SizedBox(height: screenHeight * 0.01),
-                                Text(
-                                  folderName,
-                                  style: TextStyle(
-                                    //color: Colors.white,
-                                    fontSize: 12,
-                                    fontFamily: 'Gilroy',
-                                  ),
-                                ),
-                              ],
-                            ),
+                          child: Icon(
+                            Icons.add,
+                            size: 30,
                           ),
                         ),
                       ),
-                  ],
+                      // Dynamically generate containers for each folder name
+                      for (String folderName in folderNames)
+                        GestureDetector(
+                          onTap: () {
+                            // Copy the image to the selected folder
+                            _copyImageToFolder(image, folderName);
+                            // Navigate to the folder contents page
+                            //_navigateToFolderContents(folderName);
+                          },
+                          child: Container(
+                            height: screenHeight * 0.13,
+                            width: screenWidth * 0.29,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? Color(0xFFE8E8E8) // Color for light theme
+                                  : Consts.BG_COLOR,
+                              borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SvgPicture.asset('assets/46 Open File, Document, Folder.svg'),
+                                  SizedBox(height: screenHeight * 0.01),
+                                  Text(
+                                    folderName,
+                                    style: TextStyle(
+                                      //color: Colors.white,
+                                      fontSize: 12,
+                                      fontFamily: 'Gilroy',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -563,7 +565,13 @@ class _HomePageState extends State<HomePage> {
                 ListTile(
                   leading: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
-                    child: SvgPicture.asset('assets/image-gallery 1.svg')
+                    child:Theme.of(context).brightness == Brightness.light
+                        ? ColorFiltered(colorFilter: ColorFilter.mode(
+                        Colors.black, BlendMode.srcIn),
+                       child :  SvgPicture.asset('assets/image-gallery 1.svg')
+          )// Color for light theme
+                        :       SvgPicture.asset('assets/image-gallery 1.svg'),
+
                   ),
                   title: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
@@ -582,7 +590,12 @@ class _HomePageState extends State<HomePage> {
                 ListTile(
                   leading: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
-                    child: SvgPicture.asset('assets/download (1) 1.svg')
+                    child: Theme.of(context).brightness == Brightness.light
+                        ? ColorFiltered(colorFilter: ColorFilter.mode(
+                        Colors.black, BlendMode.srcIn),
+                        child :  SvgPicture.asset('assets/download (1) 1.svg')
+                    )
+                   : SvgPicture.asset('assets/download (1) 1.svg')
                   ),
                   title: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
@@ -613,7 +626,12 @@ class _HomePageState extends State<HomePage> {
                 ListTile(
                   leading: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
-                    child: SvgPicture.asset('assets/delete 1.svg'),
+                    child:  Theme.of(context).brightness == Brightness.light
+                        ? ColorFiltered(colorFilter: ColorFilter.mode(
+                        Colors.black, BlendMode.srcIn),
+                        child :  SvgPicture.asset('assets/delete 1.svg')
+                    )
+                        :SvgPicture.asset('assets/delete 1.svg'),
                   ),
                   title: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
@@ -642,7 +660,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
   Future<bool> saveImageToGallery(File image) async {
     try {
       // Save the image to the device's photo gallery
@@ -653,8 +670,6 @@ class _HomePageState extends State<HomePage> {
       return false;
     }
   }
-
-
   // Method to show the add folder dialog
   Future<String?> _showAddFolderDialog(BuildContext context) async {
     TextEditingController controller = TextEditingController();

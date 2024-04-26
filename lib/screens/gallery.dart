@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:vault/screens/homepage.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import '../consts/consts.dart';
@@ -38,7 +40,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   Future<void> _fetchGallery() async {
     final PermissionState permissionState =
-        await PhotoManager.requestPermissionExtend();
+    await PhotoManager.requestPermissionExtend();
     if (permissionState.isAuth) {
       _fetchImages();
     } else {
@@ -71,7 +73,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     print('albums $albums');
     if (albums.isNotEmpty) {
       List<AssetEntity> media =
-          await albums[0].getAssetListPaged(size: 60, page: currentPage);
+      await albums[0].getAssetListPaged(size: 60, page: currentPage);
       print('album[0]: ${albums[0]}');
       List<Widget> tempImages = [];
       List<bool> tempSelected = [];
@@ -162,11 +164,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Widget _buildImageWidget(File file, AssetType type) {
     final String filePath = file.path.toLowerCase();
     if (filePath.endsWith('.mp4') || filePath.endsWith('.mov')) {
-      print(
-          'file path : $type'); // If it's a video file, return a video player widget
+      // print(
+      //     'file path : $type'); // If it's a video file, return a video player widget
       return _buildVideoWidget(file);
     } else {
-      print('file path : $type');
+      // print('file path : $type');
       // If it's an image file, load it as an image
       return FutureBuilder(
         future: file.readAsBytes(),
@@ -236,39 +238,39 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
     for (int i = 0; i < selectedImagePaths.length; i++) {
       // if (_isSelected[i]) {
-        final String mediaPath = selectedImagePaths[i];
-        print('Media path at index $i: $mediaPath');
+      final String mediaPath = selectedImagePaths[i];
+      // print('Media path at index $i: $mediaPath');
 
-        // Determine the type of media based on file extension
-        String extension = mediaPath.split('.').last.toLowerCase();
-        if (extension == 'mp4' || extension == 'mov') {
-          // It's a video file
-          print('Saving video at index $i...');
+      // Determine the type of media based on file extension
+      String extension = mediaPath.split('.').last.toLowerCase();
+      if (extension == 'mp4' || extension == 'mov') {
+        // It's a video file
+        print('Saving video at index $i...');
+        try {
+          // Uint8List videoBytes = await _getVideoBytes(mediaPath);
+          await hiveService.storeVideo(mediaPath, widget.folderName!);
+          print('Video at index $i saved successfully');
+        } catch (error) {
+          print('Failed to save video at index $i: $error');
+          allImagesSaved = false;
+        }
+      } else {
+        Uint8List imageBytes = await _getImageBytes(selectedImagePaths[i]);
+
+        print('Image bytes at index $i: ${imageBytes.length}');
+        if (imageBytes.isNotEmpty) {
           try {
-            Uint8List videoBytes = await _getVideoBytes(mediaPath);
-            await hiveService.storeVideo(mediaPath, widget.folderName!);
-            print('Video at index $i saved successfully');
+            await hiveService.storeImage(imageBytes, widget.folderName!);
+            print('Image $i saved successfully');
           } catch (error) {
-            print('Failed to save video at index $i: $error');
+            print('Failed to save image $i: $error');
             allImagesSaved = false;
           }
         } else {
-          Uint8List imageBytes = await _getImageBytes(selectedImagePaths[i]);
-
-          print('Image bytes at index $i: ${imageBytes.length}');
-          if (imageBytes.isNotEmpty) {
-            try {
-              await hiveService.storeImage(imageBytes, widget.folderName!);
-              print('Image $i saved successfully');
-            } catch (error) {
-              print('Failed to save image $i: $error');
-              allImagesSaved = false;
-            }
-          } else {
-            print('Image bytes at index $i are empty');
-            allImagesSaved = false;
-          }
+          print('Image bytes at index $i are empty');
+          allImagesSaved = false;
         }
+      }
       // }
     }
 
@@ -356,73 +358,79 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('MK: selectedImagePaths: $selectedImagePaths');
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? Color(0xFFFFFFFF) // Color for light theme
-            : Consts.FG_COLOR,
-        title: Text(widget.folderName!),
-      ),
-      body: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            childAspectRatio: 1 / 1,
-            mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
-            crossAxisSpacing: 3.0,
-          ),
-          itemCount: _images.length,
-          itemBuilder: (context, index) {
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isSelected[index] = !_isSelected[index];
-                  selectedCount += _isSelected[index] ? 1 : -1;
-                });
-                addImageToSelectedImages(_images[index], _isSelected[index]);
-              },
-              child: Stack(
-                children: [
-                  Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: _images[index],
-                    ),
-                  ),
-                  if (_isSelected[index])
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: Icon(
-                        Icons.check_circle,
-                        color: Colors.green,
-                        size: 24,
+    // print('MK: selectedImagePaths: $selectedImagePaths');
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.push(context, MaterialPageRoute(builder: (context)=> HomePage()));
+      return false;
+        },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).brightness == Brightness.light
+              ? Color(0xFFFFFFFF) // Color for light theme
+              : Consts.FG_COLOR,
+          title: Text(widget.folderName!),
+        ),
+        body: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 1 / 1,
+              mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
+              crossAxisSpacing: 3.0,
+            ),
+            itemCount: _images.length,
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isSelected[index] = !_isSelected[index];
+                    selectedCount += _isSelected[index] ? 1 : -1;
+                  });
+                  addImageToSelectedImages(_images[index], _isSelected[index]);
+                },
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: _images[index],
                       ),
                     ),
-                ],
-              ),
-            );
-          }),
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: (index) {
-          if (index == 0) {
-            _selectAllImages();
-          } else if (index == 1) {
-            _showConfirmationDialog();
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.select_all),
-            label: 'Select All',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.lock),
-            label: 'Lock',
-          ),
-        ],
+                    if (_isSelected[index])
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 24,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }),
+        bottomNavigationBar: BottomNavigationBar(
+          onTap: (index) {
+            if (index == 0) {
+              _selectAllImages();
+            } else if (index == 1) {
+              _showConfirmationDialog();
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.select_all),
+              label: 'Select All',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.lock),
+              label: 'Lock',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -517,9 +525,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
                                 height: 40.0,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).brightness ==
-                                          Brightness.light
+                                      Brightness.light
                                       ? Color(
-                                          0xFFF5F5F5) // Color for light theme
+                                      0xFFF5F5F5) // Color for light theme
                                       : Consts.FG_COLOR,
                                   shape: BoxShape.circle,
                                 ),
@@ -530,9 +538,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
                                   child: ColorFiltered(
                                     colorFilter: ColorFilter.mode(
                                         Theme.of(context).brightness ==
-                                                Brightness.light
+                                            Brightness.light
                                             ? Colors
-                                                .black // Color for light theme
+                                            .black // Color for light theme
                                             : Colors.white,
                                         BlendMode.srcIn),
                                     child: SvgPicture.asset(
@@ -566,18 +574,18 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Are you sure you want to move\n$selectedCount item(s)in the GalleryVault?',
+                   Text(
+                      'Are you sure you want to\nmove $selectedCount item(s)in the\nGalleryVault?',
                       style: TextStyle(
                           fontSize: 16,
                           color:
-                              Theme.of(context).brightness == Brightness.light
-                                  ? Color(0x7F222222)
-                                  : Colors.white.withOpacity(0.5)),
+                          Theme.of(context).brightness == Brightness.light
+                              ? Color(0x7F222222)
+                              : Colors.white.withOpacity(0.5)),
                     ),
                   ],
                 ),
@@ -596,7 +604,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       // Set button size
                       backgroundColor: MaterialStateProperty.all(
                         Theme.of(context).brightness == Brightness.light
@@ -608,9 +616,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       'Cancel',
                       style: TextStyle(
                           color:
-                              Theme.of(context).brightness == Brightness.light
-                                  ? Color(0x7F222222)
-                                  : Colors.white.withOpacity(0.5)),
+                          Theme.of(context).brightness == Brightness.light
+                              ? Color(0x7F222222)
+                              : Colors.white.withOpacity(0.5)),
                     ),
                   ),
                   TextButton(
@@ -619,7 +627,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       saveSelectedImagesToDatabase();
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       backgroundColor: MaterialStateProperty.all(Consts.COLOR),
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(
@@ -652,7 +660,7 @@ class HiveService {
 
     var key = DateTime.now().millisecondsSinceEpoch.toString();
 
-    print('media : $media');
+    // print('media : $media');
     if (media is Uint8List) {
       print('Uint8list media');
       // If media is image bytes, store directly

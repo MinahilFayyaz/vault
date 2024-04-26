@@ -148,7 +148,9 @@ class _OnBoardingSceenState extends State<OnBoardingSceen> {
   }) {
     Color dotColor = currentIndex == index
         ? Consts.COLOR // Selected dot color
-        : Colors.white; // Unselected dot color
+        : Theme.of(context).brightness == Brightness.light
+    ?Colors.grey.withOpacity(0.5)
+    :Colors.white; // Unselected dot color
 
     return Container(
       height: size.height * 0.007,

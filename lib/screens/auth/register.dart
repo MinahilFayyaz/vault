@@ -52,7 +52,7 @@ final screenHeight = MediaQuery.of(context).size.height;
                   ? Color(0xFFFFFFFF) // Color for light theme
                   : Consts.FG_COLOR,
              title:  Text(
-                'STEP 1/4',
+                'STEP 1/3',
                 style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
@@ -179,7 +179,10 @@ final screenHeight = MediaQuery.of(context).size.height;
                                   ),
                                   child: Text(
                                     '0',
-                                    style: TextStyle(fontSize: 20, color: Colors.white),
+                                    style: TextStyle(fontSize: 20,
+                                    color: Theme.of(context).brightness == Brightness.light
+                                        ? Colors.black// Color for light theme
+                                        : Colors.white,),
                                   ),
                                 ),
                               );

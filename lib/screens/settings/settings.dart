@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vault/screens/homepage.dart';
+import 'package:vault/screens/languages.dart';
 import 'package:vault/screens/settings/app_icons.dart';
 import 'package:vault/screens/settings/premium.dart';
 
@@ -587,7 +588,7 @@ print('albums $totalAlbums $folderNames');
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ChangePasswordPage(),
+                          builder: (context) => languagesScreen(false),
                         ),
                       );
                     },

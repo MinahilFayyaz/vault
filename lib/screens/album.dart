@@ -109,27 +109,35 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     final box = await Hive.openBox(widget.folderName!);
     List<File> retrievedImages = [];
 
+    print("MK: boxKeys:0 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
+
     // Iterate through the keys in the box
     for (var key in box.keys) {
       final value = box.get(key);
-      print('Key: $key, Value: $value');
+      // print('Key: $key, Value: $value');
       if (value is Uint8List) {
-        print('value is uint8list');
+        // print('value is uint8list');
         // Create a temporary directory and save the image file
         final tempDir = await getTemporaryDirectory();
         final fileName = '$key.png';
         final filePath = '${tempDir.path}/$fileName';
         final file = File(filePath);
         await file.writeAsBytes(value);
-        retrievedImages.add(file);
+        if (await file.exists()) {
+          retrievedImages.add(file);
+        }
       } else if (value is String) {
         // Assume it's a video file path
         print('value is string');
-        retrievedImages.add(File(value));
+        final file = File(value);
+        // print('MK: is video Exists: ${key}');
+        // Assume it's a video file path
+        if (await file.exists()) {
+          retrievedImages.add(File(value));
+        }
       }
     }
-
-    return retrievedImages;
+    return retrievedImages.toSet().toList();
   }
 
   Future<void> _showAddFilesDialog(BuildContext context) async {
@@ -142,48 +150,44 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           children: [
             // Transparent background
             GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pop(); // Dismiss the dialog on tap
-                },
-                child: Container(
-                  width: 375,
-                  height: 812,
-                  decoration: BoxDecoration(
-                      //color: Colors.black.withOpacity(0.800000011920929),
-                      ),
-                )),
+              onTap: () {
+                Navigator.of(context).pop(); // Dismiss the dialog on tap
+              },
+              child: Container(
+              width: 375,
+              height: 812,
+              color: Colors.black.withOpacity(0.1), // Adjust opacity if needed
+              ),
+            ),
             // Centered dialog
-            Align(
-              alignment: Alignment.topCenter,
+            Center(
               child: Dialog(
-                backgroundColor: Colors.black.withOpacity(0.800000011920929),
+                backgroundColor: Colors.transparent,
                 child: Container(
-                  width: 375,
-                  height: 812,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
                   padding: EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SvgPicture.asset('assets/Layer 88.svg'),
-                      Center(
-                        child: Text(
-                          'Add Files',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w400,
-                          ),
+                      Text(
+                        'Add Files',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
                         ),
                       ),
                       SizedBox(height: 8),
-                      Center(
-                        child: Text(
-                          'You can add Photos and Videos to\nthe album by tapping +',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                          ),
+                      Text(
+                        'You can add Photos and Videos to\nthe album by tapping +',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
                         ),
                       ),
                       SizedBox(height: 16),
@@ -214,7 +218,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
       // Set the flag to false to indicate that the dialog has been shown
       prefs.setBool('first_launch', false);
       // Show the dialog
-      WidgetsBinding.instance!.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         _showAddFilesDialog(context);
       });
     }
@@ -228,6 +232,9 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     // Iterate through the keys in the box
     // Create a temporary directory and save the image file
     final tempDir = await getTemporaryDirectory();
+
+    print("MK: boxKeys:4 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
+
     for (var key in box.keys) {
       final value = box.get(key);
       if (value is Uint8List) {
@@ -239,23 +246,25 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
         // retrievedMedia.add(file);
         // file.delete();
         // await deleteMediaFromHive(file.path);
-        print('MK: image Exists: ${await file.exists()}');
+        // print('MK: image Exists: ${await file.exists()}');
         if (await file.exists()) {
           retrievedMedia.add(file);
-        } else {
-          print('MK: removing image ${value}');
-          await deleteMediaFromHive(file.path);
         }
+        // else {
+        //   print('MK: removing image ${value}');
+        //   await deleteMediaFromHive(file.path);
+        // }
       } else if ((value is String)) {
         final file = File(value);
-        print('MK: is video Exists: ${key}');
+        // print('MK: is video Exists: ${key}');
         // Assume it's a video file path
         if (await file.exists()) {
           retrievedMedia.add(value);
-        } else {
-          print('MK: removing video ${value}');
-          await deleteMediaFromHive(value);
         }
+        // else {
+        //   print('MK: removing video ${value}');
+        //   await deleteMediaFromHive(value);
+        // }
       }
     }
     return retrievedMedia.toSet().toList();
@@ -317,6 +326,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
             List<dynamic> combinedMedia = snapshot.data!;
+            print('MK: combinedMedia: ${combinedMedia}');
             if (combinedMedia.isEmpty) {
               return Center(
                 child: Column(
@@ -343,7 +353,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 ),
               );
             } else {
-              print('MK: combinedMedia: ${combinedMedia.length} for $combinedMedia');
+              // print('MK: combinedMedia: ${combinedMedia.length} for $combinedMedia');
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
@@ -353,6 +363,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 itemCount: combinedMedia.length,
                 itemBuilder: (context, index) {
                   final media = combinedMedia[index];
+                  print('MK: media is File: ${media is File}');
                   if (media is File) {
                     return GestureDetector(
                       onTap: () {
@@ -416,7 +427,25 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                                     imageFile: File(media),
                                     // Replace 'file' with 'media'
                                     imageName: videoName,
-                                    folderName: '',
+                                    onImageRemoved: (removedMedia) async {
+                                      setState(() {
+                                        combinedMedia.removeWhere((item) {
+                                          if (item is File) {
+                                            return item == removedMedia;
+                                          } else if (item is String) {
+                                            return item == removedMedia.path;
+                                          }
+                                          return false;
+                                        });
+                                      });
+
+                                      // Delete the media from the database
+                                      if (removedMedia is File) {
+                                        await deleteMediaFromHive(removedMedia.path);
+                                      }
+                                    },
+                                    // folderName: '',
+                                    folderName: widget.folderName,
                                   ),
                                 ),
                               );
@@ -435,8 +464,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                           );
                         } else {
                           return Container(
-                            // height: 20, width: 20,
-                            color: Colors.red,
                           );
                         }
                       },

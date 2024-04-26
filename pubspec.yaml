@@ -58,6 +58,7 @@ dependencies:
   video_thumbnail:
   video_player:
   chewie:
+  auto_size_text:
 
 
 dev_dependencies:

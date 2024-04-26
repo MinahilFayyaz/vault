@@ -40,7 +40,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                   ? Color(0xFFFFFFFF) // Color for light theme
                   : Consts.FG_COLOR,
               title: Text(
-                'STEP 3/4',
+                'STEP 3/3',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
@@ -68,13 +68,15 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         ),
                       ),
                       SizedBox(height: size.height * 0.02),
-                      Text(
-                        'Simply enter your email address, and we’ll guide \n '
-                            'you through the process of resetting Pin Securely',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                          //color: Colors.white,
+                      Center(
+                        child: Text(
+                          'Simply enter your email address, and we’ll guide'
+                              'you through the process of resetting Pin Securely',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            //color: Colors.white,
+                          ),
                         ),
                       ),
                       SizedBox(height: size.height * 0.03),
@@ -156,7 +158,9 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         },
                         child: Text(
                           'Skip',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: Theme.of(context).brightness == Brightness.light
+                              ? Color(0xFF666666)// Color for light theme
+                              : Color(0xFF999999),),
                         ),
                       ),
                     ],
