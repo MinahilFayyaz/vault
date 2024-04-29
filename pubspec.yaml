@@ -58,7 +58,8 @@ dependencies:
   video_thumbnail:
   video_player:
   chewie:
-  auto_size_text:
+  get_storage:
+  shimmer:
 
 
 dev_dependencies:

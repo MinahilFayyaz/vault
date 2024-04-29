@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:vault/screens/homepage.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import '../consts/consts.dart';
@@ -282,6 +280,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
     } else {
       _showSnackBar('Some images have not been saved to the database.');
     }
+    Navigator.pop(context, true);
   }
 
   Future<Uint8List> _getImageBytes(String filePath) async {
@@ -359,78 +358,72 @@ class _GalleryScreenState extends State<GalleryScreen> {
   @override
   Widget build(BuildContext context) {
     // print('MK: selectedImagePaths: $selectedImagePaths');
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.push(context, MaterialPageRoute(builder: (context)=> HomePage()));
-      return false;
-        },
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).brightness == Brightness.light
-              ? Color(0xFFFFFFFF) // Color for light theme
-              : Consts.FG_COLOR,
-          title: Text(widget.folderName!),
-        ),
-        body: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1 / 1,
-              mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
-              crossAxisSpacing: 3.0,
-            ),
-            itemCount: _images.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isSelected[index] = !_isSelected[index];
-                    selectedCount += _isSelected[index] ? 1 : -1;
-                  });
-                  addImageToSelectedImages(_images[index], _isSelected[index]);
-                },
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: _images[index],
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? Color(0xFFFFFFFF) // Color for light theme
+            : Consts.FG_COLOR,
+        title: Text(widget.folderName!),
+      ),
+      body: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 1 / 1,
+            mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
+            crossAxisSpacing: 3.0,
+          ),
+          itemCount: _images.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isSelected[index] = !_isSelected[index];
+                  selectedCount += _isSelected[index] ? 1 : -1;
+                });
+                addImageToSelectedImages(_images[index], _isSelected[index]);
+              },
+              child: Stack(
+                children: [
+                  Padding(
+                    padding:
+                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: _images[index],
+                    ),
+                  ),
+                  if (_isSelected[index])
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 24,
                       ),
                     ),
-                    if (_isSelected[index])
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                          size: 24,
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            }),
-        bottomNavigationBar: BottomNavigationBar(
-          onTap: (index) {
-            if (index == 0) {
-              _selectAllImages();
-            } else if (index == 1) {
-              _showConfirmationDialog();
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.select_all),
-              label: 'Select All',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.lock),
-              label: 'Lock',
-            ),
-          ],
-        ),
+                ],
+              ),
+            );
+          }),
+      bottomNavigationBar: BottomNavigationBar(
+        onTap: (index) {
+          if (index == 0) {
+            _selectAllImages();
+          } else if (index == 1) {
+            _showConfirmationDialog();
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.select_all),
+            label: 'Select All',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.lock),
+            label: 'Lock',
+          ),
+        ],
       ),
     );
   }
@@ -574,12 +567,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                   Text(
-                      'Are you sure you want to\nmove $selectedCount item(s)in the\nGalleryVault?',
+                    Text(
+                      'Are you sure you want to move\n$selectedCount item(s)in the GalleryVault?',
                       style: TextStyle(
                           fontSize: 16,
                           color:
@@ -604,7 +597,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
                       // Set button size
                       backgroundColor: MaterialStateProperty.all(
                         Theme.of(context).brightness == Brightness.light
@@ -627,7 +620,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       saveSelectedImagesToDatabase();
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
                       backgroundColor: MaterialStateProperty.all(Consts.COLOR),
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(

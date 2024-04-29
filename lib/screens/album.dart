@@ -109,7 +109,8 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     final box = await Hive.openBox(widget.folderName!);
     List<File> retrievedImages = [];
 
-    print("MK: boxKeys:0 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
+    print(
+        "MK: boxKeys:0 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
 
     // Iterate through the keys in the box
     for (var key in box.keys) {
@@ -150,44 +151,48 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           children: [
             // Transparent background
             GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop(); // Dismiss the dialog on tap
-              },
-              child: Container(
-              width: 375,
-              height: 812,
-              color: Colors.black.withOpacity(0.1), // Adjust opacity if needed
-              ),
-            ),
-            // Centered dialog
-            Center(
-              child: Dialog(
-                backgroundColor: Colors.transparent,
+                onTap: () {
+                  Navigator.of(context).pop(); // Dismiss the dialog on tap
+                },
                 child: Container(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height,
+                  width: 375,
+                  height: 812,
+                  decoration: BoxDecoration(
+                    //color: Colors.black.withOpacity(0.800000011920929),
+                  ),
+                )),
+            // Centered dialog
+            Align(
+              alignment: Alignment.topCenter,
+              child: Dialog(
+                backgroundColor: Colors.black.withOpacity(0.800000011920929),
+                child: Container(
+                  width: 375,
+                  height: 812,
                   padding: EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       SvgPicture.asset('assets/Layer 88.svg'),
-                      Text(
-                        'Add Files',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
+                      Center(
+                        child: Text(
+                          'Add Files',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
                       SizedBox(height: 8),
-                      Text(
-                        'You can add Photos and Videos to\nthe album by tapping +',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
+                      Center(
+                        child: Text(
+                          'You can add Photos and Videos to\nthe album by tapping +',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
                       SizedBox(height: 16),
@@ -233,7 +238,8 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     // Create a temporary directory and save the image file
     final tempDir = await getTemporaryDirectory();
 
-    print("MK: boxKeys:4 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
+    print(
+        "MK: boxKeys:4 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
 
     for (var key in box.keys) {
       final value = box.get(key);
@@ -292,12 +298,15 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           ),
           actions: [
             GestureDetector(
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                dynamic res = await Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
                             GalleryScreen(folderName: widget.folderName)));
+                if (res == true) {
+                  setState(() {});
+                }
               },
               child: Padding(
                 padding: EdgeInsets.all(screenWidth * 0.02),
@@ -441,7 +450,8 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
 
                                       // Delete the media from the database
                                       if (removedMedia is File) {
-                                        await deleteMediaFromHive(removedMedia.path);
+                                        await deleteMediaFromHive(
+                                            removedMedia.path);
                                       }
                                     },
                                     // folderName: '',
@@ -463,8 +473,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                             ),
                           );
                         } else {
-                          return Container(
-                          );
+                          return Container();
                         }
                       },
                     );

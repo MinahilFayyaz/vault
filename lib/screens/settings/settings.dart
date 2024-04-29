@@ -25,17 +25,19 @@ class SettingsPage extends StatelessWidget {
   final int totalAlbums;
   final List<String> folderNames;
 
-  const SettingsPage({Key? key, required this.totalAlbums, required this.folderNames}) : super(key: key);
+  const SettingsPage(
+      {Key? key, required this.totalAlbums, required this.folderNames})
+      : super(key: key);
 
-
-  Future<bool> _saveImageToGallery(BuildContext context,
-      Uint8List imageData, String imageName) async {
+  Future<bool> _saveImageToGallery(
+      BuildContext context, Uint8List imageData, String imageName) async {
     try {
       print('Attempting to save image: $imageName');
       print('Image data length: ${imageData.length}');
 
       // Attempt to save the image
-      final result = await ImageGallerySaver.saveImage(imageData, name: imageName);
+      final result =
+      await ImageGallerySaver.saveImage(imageData, name: imageName);
 
       if (result['isSuccess'] == true) {
         print('Image $imageName saved to gallery successfully!');
@@ -47,6 +49,29 @@ class SettingsPage extends StatelessWidget {
     } catch (error) {
       // Catch and log any errors that occurred during the save process
       print('Failed to save image $imageName: $error');
+      return false;
+    }
+  }
+
+  Future<bool> _saveFileToGallery(
+      BuildContext context, String filePath, String fileName) async {
+    try {
+      print('Attempting to save file: $fileName');
+      // print('Image data length: ${imageData.length}');
+
+      // Attempt to save the image
+      final result = await ImageGallerySaver.saveFile(filePath, name: fileName);
+
+      if (result['isSuccess'] == true) {
+        print('File $fileName saved to gallery successfully!');
+        return true;
+      } else {
+        print('Failed to save file: ${result['error']}');
+        return false;
+      }
+    } catch (error) {
+      // Catch and log any errors that occurred during the save process
+      print('Failed to save file $fileName: $error');
       return false;
     }
   }
@@ -154,16 +179,22 @@ class SettingsPage extends StatelessWidget {
 
         // Iterate over the keys (image names)
         for (final key in keys) {
-          // Get the image data from the box
-          final Uint8List imageData = box.get(key) as Uint8List;
-          // Save the image to the gallery
-          await _saveImageToGallery(context, imageData, key.toString());
+          if (box.get(key) is Uint8List) {
+            // Get the image data from the box
+            final Uint8List imageData = box.get(key) as Uint8List;
+            // Save the image to the gallery
+            await _saveImageToGallery(context, imageData, key.toString());
+          } else if (box.get(key) is String) {
+            final String videoPath = box.get(key) as String;
+            await _saveFileToGallery(context, videoPath, key.toString());
+          }
 
           // Update progress
           exportedImages++;
 
           // Calculate progress
-          double progress = totalImages == 0 ? 1.0 : exportedImages / totalImages;
+          double progress =
+          totalImages == 0 ? 1.0 : exportedImages / totalImages;
 
           // Update progress dialog
           Navigator.of(context).pop(); // Close current dialog
@@ -187,7 +218,6 @@ class SettingsPage extends StatelessWidget {
         SnackBar(content: Text('All files exported successfully!')),
       );
     } catch (error) {
-      print('Failed to export files: $error');
       // Hide the progress dialog and show an error message
       Navigator.of(context).pop(); // Hide the progress dialog
       ScaffoldMessenger.of(context).showSnackBar(
@@ -195,8 +225,6 @@ class SettingsPage extends StatelessWidget {
       );
     }
   }
-
-
 
   // Future<void> _exportAllFiles(BuildContext context) async {
   // Future<void> _exportAllFiles(BuildContext context) async {
@@ -310,7 +338,6 @@ class SettingsPage extends StatelessWidget {
   //   }
   // }
 
-
   // Future<void> _exportAllFiles(BuildContext context) async {
   //   try {
   //     // Get the path to the temporary directory
@@ -418,8 +445,6 @@ class SettingsPage extends StatelessWidget {
   //   }
   // }
 
-
-
   Future<void> _exportAllFiles(BuildContext context) async {
     try {
       // Get the path to the temporary directory
@@ -461,20 +486,35 @@ class SettingsPage extends StatelessWidget {
 
         // Iterate over the files in the folder
         for (final dynamic key in keys) {
-          final Uint8List imageData = box.get(key) as Uint8List;
+          // final Uint8List imageData = box.get(key) as Uint8List;
           final String imageName = key.toString();
           final String tempFolderPath = '${directory.path}/$folderName';
-          final String tempFilePath = '$tempFolderPath/$imageName';
+
 
           // Create the temporary folder if it doesn't exist
           await Directory(tempFolderPath).create(recursive: true);
 
-          // Write image data to temporary file
-          final File tempFile = File(tempFilePath);
-          await tempFile.writeAsBytes(imageData);
+          File tempFile;
 
-          // Add the temporary file to the zip file
-          zipEncoder.addFile(tempFile, '$folderName/$imageName');
+          if (box.get(key) is Uint8List) {
+            final Uint8List imageData = box.get(key) as Uint8List;
+            final String tempFilePath = '$tempFolderPath/$imageName.png';
+            tempFile = File(tempFilePath);
+            await tempFile.writeAsBytes(imageData);
+
+            String extension = tempFilePath.split('.').last.toLowerCase();
+
+            zipEncoder.addFile(tempFile, '$folderName/$imageName.$extension');
+          } else if (box.get(key) is String) {
+            print('MK: saving video here...');
+            final String videoPath = box.get(key) as String;
+            tempFile = File(videoPath);
+            final Uint8List videoData = await tempFile.readAsBytes();
+            await tempFile.writeAsBytes(videoData);
+            String extension = videoPath.split('.').last.toLowerCase();
+            zipEncoder.addFile(tempFile, '$folderName/$imageName.$extension');
+            print('MK: saved video...: $videoData');
+          }
 
           // Update progress
           exportedImages++;
@@ -521,11 +561,10 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-print('albums $totalAlbums $folderNames');
+    print('albums $totalAlbums $folderNames');
     return WillPopScope(
       onWillPop: () async {
         Navigator.pushReplacement(
@@ -546,13 +585,14 @@ print('albums $totalAlbums $folderNames');
                 ? Color(0xFFFFFFFF) // Color for light theme
                 : Consts.FG_COLOR,
             centerTitle: true,
-            title: const Text('Setting',
+            title: const Text(
+              'Setting',
               style: TextStyle(
-              //color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'GilroyBold', // Apply Gilroy font family
-            ),
+                //color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'GilroyBold', // Apply Gilroy font family
+              ),
             ),
           ),
         ),
@@ -564,21 +604,24 @@ print('albums $totalAlbums $folderNames');
               ),
               child: Column(
                 children: [
-                  SizedBox(height: size.height * 0.02,),
+                  SizedBox(
+                    height: size.height * 0.02,
+                  ),
                   Padding(
                     padding: EdgeInsets.symmetric(
                         horizontal: size.width * 0.02,
-                      vertical: size.height * 0.005
-                    ),
+                        vertical: size.height * 0.005),
                     child: Align(
                       alignment: Alignment.topLeft,
-                      child: Text('Settings',
+                      child: Text(
+                        'Settings',
                         style: TextStyle(
                           //color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'GilroyBold', // Apply Gilroy font family
-                        ),),
+                        ),
+                      ),
                     ),
                   ),
                   _buildListtile(
@@ -618,111 +661,120 @@ print('albums $totalAlbums $folderNames');
                     tiletitle: 'Export all Files',
                     iconData: 'assets/settings/download (1) 2.svg',
                     onTap: () async {
-
                       final userChoice = await showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
                           title: Center(child: Text('Export Files')),
-                          content: Text('Would you like to save the images to the gallery or download them as a zip file?'),
+                          content: Text(
+                              'Would you like to save the images to the gallery or download them as a zip file?'),
                           actions: [
-                           Row(
-                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                           children: [
-                             TextButton(
-                              onPressed: () {
-                                // User chose to save images to the gallery
-                                Navigator.of(context).pop('gallery');
-                              },
-                              style: ButtonStyle(
-                                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
+                            Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      // User chose to save images to the gallery
+                                      Navigator.of(context).pop('gallery');
+                                    },
+                                    style: ButtonStyle(
+                                      shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(10.0),
+                                        ),
+                                      ),
+                                      minimumSize: MaterialStateProperty.all(
+                                          Size(120, 40)),
+                                      // Set button size
+                                      backgroundColor:
+                                      MaterialStateProperty.all(Consts
+                                          .COLOR), // Set background color
+                                    ),
+                                    child: Text(
+                                      'Save to Gallery',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
-                                ),
-                                minimumSize: MaterialStateProperty.all(Size(120, 40)), // Set button size
-                                backgroundColor: MaterialStateProperty.all(
-                                  Consts.COLOR
-                                ), // Set background color
-                              ),
-                              child: Text('Save to Gallery',
-                              style: TextStyle(
-                                color: Colors.white
-                              ),),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                // User chose to download the zip file
-                                Navigator.of(context).pop('zip');
-                              },
-                              style: ButtonStyle(
-                                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
+                                  TextButton(
+                                    onPressed: () {
+                                      // User chose to download the zip file
+                                      Navigator.of(context).pop('zip');
+                                    },
+                                    style: ButtonStyle(
+                                      shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(10.0),
+                                        ),
+                                      ),
+                                      minimumSize: MaterialStateProperty.all(
+                                          Size(120, 40)),
+                                      // Set button size
+                                      backgroundColor:
+                                      MaterialStateProperty.all(Consts
+                                          .COLOR), // Set background color
+                                    ),
+                                    child: Text(
+                                      'Download Zip',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
-                                ),
-                                minimumSize: MaterialStateProperty.all(Size(120, 40)), // Set button size
-                                backgroundColor: MaterialStateProperty.all(Consts.COLOR), // Set background color
-                              ),
-                              child: Text('Download Zip',
-                              style: TextStyle(
-                                color: Colors.white
-                              ),),
-                            ),])
+                                ])
                           ],
                         ),
                       );
 
-                 // if (userChoice == 'gallery') {
-                 //        String folderName =
-                 //            "yourfolder"; // Specify the folder name
-                 //        final box = await Hive.openBox(folderName);
-                 //        final List<dynamic> keys = box.keys.toList();
-                 //
-                 //        bool allFilesSaved = true;
-                 //        List<String> failedFiles = [];
-                 //
-                 //        for (var key in keys) {
-                 //          final Uint8List imageData = box.get(key) as Uint8List;
-                 //          final String imageName = key.toString();
-                 //
-                 //          // Attempt to save the image and check the result
-                 //          final result = await _saveImageToGallery(
-                 //              context, imageData, imageName);
-                 //
-                 //          if (!result) {
-                 //            // Check for failed save operations
-                 //            allFilesSaved = false;
-                 //            failedFiles.add(imageName);
-                 //          }
-                 //        }
-                 //
-                 //
-                 //        // Display the appropriate snack bar message based on whether all files were saved
-                 //        if (allFilesSaved) {
-                 //          ScaffoldMessenger.of(context).showSnackBar(
-                 //            SnackBar(
-                 //                content:
-                 //                    Text('All files exported successfully!')),
-                 //          );
-                 //        } else {
-                 //          ScaffoldMessenger.of(context).showSnackBar(
-                 //            SnackBar(
-                 //                content: Text(
-                 //                    'Some files failed to export: ${failedFiles.join(", ")}')),
-                 //          );
-                 //        }
-                 //      }
-                      if (userChoice == 'gallery'){
+                      // if (userChoice == 'gallery') {
+                      //        String folderName =
+                      //            "yourfolder"; // Specify the folder name
+                      //        final box = await Hive.openBox(folderName);
+                      //        final List<dynamic> keys = box.keys.toList();
+                      //
+                      //        bool allFilesSaved = true;
+                      //        List<String> failedFiles = [];
+                      //
+                      //        for (var key in keys) {
+                      //          final Uint8List imageData = box.get(key) as Uint8List;
+                      //          final String imageName = key.toString();
+                      //
+                      //          // Attempt to save the image and check the result
+                      //          final result = await _saveImageToGallery(
+                      //              context, imageData, imageName);
+                      //
+                      //          if (!result) {
+                      //            // Check for failed save operations
+                      //            allFilesSaved = false;
+                      //            failedFiles.add(imageName);
+                      //          }
+                      //        }
+                      //
+                      //
+                      //        // Display the appropriate snack bar message based on whether all files were saved
+                      //        if (allFilesSaved) {
+                      //          ScaffoldMessenger.of(context).showSnackBar(
+                      //            SnackBar(
+                      //                content:
+                      //                    Text('All files exported successfully!')),
+                      //          );
+                      //        } else {
+                      //          ScaffoldMessenger.of(context).showSnackBar(
+                      //            SnackBar(
+                      //                content: Text(
+                      //                    'Some files failed to export: ${failedFiles.join(", ")}')),
+                      //          );
+                      //        }
+                      //      }
+                      if (userChoice == 'gallery') {
                         await _exportAllImages(context);
+                      } else if (userChoice == 'zip') {
+                        // Download zip file
+                        await _exportAllFiles(context);
                       }
-                 else if (userChoice == 'zip') {
-                   // Download zip file
-                   await _exportAllFiles(context);
-                       }
                     },
                   ),
-
-
                   SizedBox(
                     height: size.height * 0.0001,
                   ),
@@ -757,17 +809,18 @@ print('albums $totalAlbums $folderNames');
                   Padding(
                     padding: EdgeInsets.symmetric(
                         horizontal: size.width * 0.02,
-                        vertical: size.height * 0.01
-                    ),
+                        vertical: size.height * 0.01),
                     child: Align(
                       alignment: Alignment.topLeft,
-                      child: Text('Membership',
+                      child: Text(
+                        'Membership',
                         style: TextStyle(
                           //color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'GilroyBold', // Apply Gilroy font family
-                        ),),
+                        ),
+                      ),
                     ),
                   ),
                   _buildListtile(
@@ -786,17 +839,18 @@ print('albums $totalAlbums $folderNames');
                   Padding(
                     padding: EdgeInsets.symmetric(
                         horizontal: size.width * 0.02,
-                        vertical: size.height * 0.01
-                    ),
+                        vertical: size.height * 0.01),
                     child: Align(
                       alignment: Alignment.topLeft,
-                      child: Text('Others',
+                      child: Text(
+                        'Others',
                         style: TextStyle(
                           //color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'GilroyBold', // Apply Gilroy font family
-                        ),),
+                        ),
+                      ),
                     ),
                   ),
                   SizedBox(
@@ -846,7 +900,8 @@ print('albums $totalAlbums $folderNames');
                         ),
                       );
                     },
-                  ),SizedBox(
+                  ),
+                  SizedBox(
                     height: size.height * 0.0001,
                   ),
                   _buildListtile(
@@ -861,7 +916,8 @@ print('albums $totalAlbums $folderNames');
                         ),
                       );
                     },
-                  ),SizedBox(
+                  ),
+                  SizedBox(
                     height: size.height * 0.0001,
                   ),
                   _buildListtile(
@@ -1000,8 +1056,11 @@ class _ProgressDialogState extends State<ProgressDialog> {
             title: Column(
               children: [
                 SvgPicture.asset('assets/Group 21149.svg'),
-                SizedBox( height: 2,),
-                Text('Exported Successfully!',
+                SizedBox(
+                  height: 2,
+                ),
+                Text(
+                  'Exported Successfully!',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1021,24 +1080,20 @@ class _ProgressDialogState extends State<ProgressDialog> {
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  minimumSize: MaterialStateProperty.all(Size(285, 44)), // Set button size
+                  minimumSize: MaterialStateProperty.all(Size(285, 44)),
+                  // Set button size
                   backgroundColor: MaterialStateProperty.all(
-                      Consts.COLOR
-                  ), // Set background color
+                      Consts.COLOR), // Set background color
                 ),
                 child: Text(
                   'Continue',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
             ],
           ),
         );
-      }
-      );
+      });
     }
   }
 
@@ -1071,7 +1126,8 @@ class _ProgressDialogState extends State<ProgressDialog> {
                   ),
                 ),
                 Text(
-                  '${(widget.progress * 100).toStringAsFixed(0)}%', // Format percentage as an integer
+                  '${(widget.progress * 100).toStringAsFixed(0)}%',
+                  // Format percentage as an integer
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1087,4 +1143,3 @@ class _ProgressDialogState extends State<ProgressDialog> {
     );
   }
 }
-
