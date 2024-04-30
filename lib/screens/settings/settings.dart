@@ -490,7 +490,6 @@ class SettingsPage extends StatelessWidget {
           final String imageName = key.toString();
           final String tempFolderPath = '${directory.path}/$folderName';
 
-
           // Create the temporary folder if it doesn't exist
           await Directory(tempFolderPath).create(recursive: true);
 
@@ -509,11 +508,10 @@ class SettingsPage extends StatelessWidget {
             print('MK: saving video here...');
             final String videoPath = box.get(key) as String;
             tempFile = File(videoPath);
-            final Uint8List videoData = await tempFile.readAsBytes();
-            await tempFile.writeAsBytes(videoData);
+            bool isExist = await tempFile.exists();
+            if (!isExist) continue;
             String extension = videoPath.split('.').last.toLowerCase();
             zipEncoder.addFile(tempFile, '$folderName/$imageName.$extension');
-            print('MK: saved video...: $videoData');
           }
 
           // Update progress
@@ -542,15 +540,22 @@ class SettingsPage extends StatelessWidget {
       // Hide the progress dialog
       Navigator.of(context).pop();
 
-      // Notify the user that the zip file has been saved
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Files exported to: $zipFilePath')),
-      );
+      print('MK: exportedImages...:0 $exportedImages');
+      if (exportedImages > 0) {
+        // Notify the user that the zip file has been saved
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Files exported to: $zipFilePath')),
+        );
 
-      final XFile xFile = XFile(zipFilePath);
-      await Share.shareXFiles([xFile], subject: 'Exported files');
-      // Share the zip file
-      //Share.shareFiles([zipFilePath], text: 'Exported files');
+        final XFile xFile = XFile(zipFilePath);
+        await Share.shareXFiles([xFile], subject: 'Exported files');
+        // Share the zip file
+        //Share.shareFiles([zipFilePath], text: 'Exported files');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No files to export')),
+        );
+      }
     } catch (error) {
       // Hide the progress dialog and show an error message
       Navigator.of(context).pop();

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../provider/authprovider.dart';
 import '../provider/onboardprovider.dart';
 import '../provider/themeprovider.dart';
@@ -60,9 +60,8 @@ class SplashScreen extends StatelessWidget {
                           SizedBox(
                             height: size.height * 0.02,
                           ),
-                          const Text(
-                            'SafeBox is the #1 Photo Vault app for \n '
-                                'Protecting Private Photo and Video ',
+                          Text(
+                            AppLocalizations.of(context)!.safeBoxIsThePhotoVaultAppForProtectingPrivatePhotoAndVideo,
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
@@ -85,7 +84,7 @@ class SplashScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                            buttontext: 'Get Started',
+                            buttontext: AppLocalizations.of(context)!.getStarted,
                           ),
                         ],
                       ),

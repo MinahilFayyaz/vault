@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 class Language {
   String code;
   String name;
-  String flagAsset;
   bool isSelected;
 
   Language({
     required this.code,
     required this.name,
-    required this.flagAsset,
     this.isSelected = false,
   });
 

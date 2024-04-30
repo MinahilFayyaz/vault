@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vault/consts/consts.dart';
 import '../controller/language_change_controller.dart';
 import '../models/languages_model.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 
 class languagesScreen extends StatefulWidget {
   languagesScreen(this.isFirstLaunch, {Key? key}) : super(key: key);
@@ -16,7 +20,7 @@ class languagesScreen extends StatefulWidget {
 
 class _languagesScreenState extends State<languagesScreen> {
   late SharedPreferences _prefs;
-  late Language selectedLanguage = languages.isNotEmpty ? languages.first : Language(code: 'en', name: 'English', flagAsset: 'assets/flags/America.svg');
+  late Language selectedLanguage = languages.isNotEmpty ? languages.first : Language(code: 'en', name: 'English');
 
   @override
   void initState() {
@@ -42,28 +46,28 @@ class _languagesScreenState extends State<languagesScreen> {
   }
 
   List<Language> languages = [
-    Language(code: 'en', name: 'English', flagAsset: 'assets/flags/America.svg'),
-    Language(code: 'ar', name: 'Arabic', flagAsset: 'assets/flags/Group 21118.svg'),
-    Language(code: 'bn', name: 'Bangali', flagAsset: 'assets/flags/Group 21140.svg'),
-    Language(code: 'zh', name: 'Chinese', flagAsset: 'assets/flags/Group 21129.svg'),
-    Language(code: 'fr', name: 'French', flagAsset: 'assets/flags/Group 21122.svg'),
-    Language(code: 'de', name: 'German', flagAsset: 'assets/flags/Group 21132.svg'),
-    Language(code: 'hi', name: 'Hindi', flagAsset: 'assets/flags/Group 21119.svg'),
-    Language(code: 'id', name: 'Indonesia', flagAsset: 'assets/flags/Group 21125.svg'),
-    Language(code: 'ms', name: 'Malay', flagAsset: 'assets/flags/Group 21124.svg'),
-    Language(code: 'nl', name: 'Dutch', flagAsset: 'assets/flags/Group 21137.svg'),
-    Language(code: 'ga', name: 'Irish', flagAsset: 'assets/flags/Group 21306.svg'),
-    Language(code: 'it', name: 'Italian', flagAsset: 'assets/flags/Group 21305.svg'),
-    Language(code: 'ja', name: 'Japanese', flagAsset: 'assets/flags/Group 21304.svg'),
-    Language(code: 'ko', name: 'Korean', flagAsset: 'assets/flags/Group 21302.svg'),
-    Language(code: 'fa', name: 'Persian', flagAsset: 'assets/flags/Group 21128.svg'),
-    Language(code: 'pl', name: 'Polish', flagAsset: 'assets/flags/Group 21126.svg'),
-    Language(code: 'pt', name: 'Portuguese', flagAsset: 'assets/flags/Group 21131.svg'),
-    Language(code: 'ro', name: 'Romanian', flagAsset: 'assets/flags/Group 21134.svg'),
-    Language(code: 'ru', name: 'Russian', flagAsset: 'assets/flags/Group 21127.svg'),
-    Language(code: 'th', name: 'Thai', flagAsset: 'assets/flags/Group 21133.svg'),
-    Language(code: 'tr', name: 'Turkish', flagAsset: 'assets/flags/Group 21130.svg'),
-    Language(code: 'ur', name: 'Urdu', flagAsset: 'assets/flags/Group 21123.svg'),
+    Language(code: 'en', name: 'English'),
+    Language(code: 'ar', name: 'Arabic'),
+    Language(code: 'bn', name: 'Bangali'),
+    Language(code: 'zh', name: 'Chinese'),
+    Language(code: 'fr', name: 'French'),
+    Language(code: 'de', name: 'German'),
+    Language(code: 'hi', name: 'Hindi'),
+    Language(code: 'id', name: 'Indonesia'),
+    Language(code: 'ms', name: 'Malay'),
+    Language(code: 'nl', name: 'Dutch'),
+    Language(code: 'ga', name: 'Irish'),
+    Language(code: 'it', name: 'Italian'),
+    Language(code: 'ja', name: 'Japanese'),
+    Language(code: 'ko', name: 'Korean'),
+    Language(code: 'fa', name: 'Persian'),
+    Language(code: 'pl', name: 'Polish'),
+    Language(code: 'pt', name: 'Portuguese'),
+    Language(code: 'ro', name: 'Romanian'),
+    Language(code: 'ru', name: 'Russian'),
+    Language(code: 'th', name: 'Thai'),
+    Language(code: 'tr', name: 'Turkish'),
+    Language(code: 'ur', name: 'Urdu'),
   ];
 
   Future<void> _loadSelectedLanguage() async {
@@ -94,15 +98,18 @@ class _languagesScreenState extends State<languagesScreen> {
         lang.isSelected = lang == selectedLanguage;
       });
     });
+
     final languageChangeController = context.read<LanguageChangeController>();
     await languageChangeController.changeLanguage(Locale(language.code));
-    //Get.updateLocale(Locale(language.code));
+    Get.updateLocale(Locale(language.code));
 
+    print('widget.isFirst ${widget.isFirstLaunch}');
     if (widget.isFirstLaunch == false) {
-      //Get.reset();
+      print('widget.isFirst ${widget.isFirstLaunch}');
+      Get.reset();
     }
 
-    //GetStorage().write('selectedLanguageCode', language.code); // Use GetStorage to write the selected language code
+    GetStorage().write('selectedLanguageCode', language.code);
 
     print('Language set state Changed to: ${language.code}');
   }
@@ -124,27 +131,35 @@ class _languagesScreenState extends State<languagesScreen> {
     final locale = Localizations.localeOf(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(size.height * 0.07),
-        child: AppBar(
-          backgroundColor: Theme.of(context).brightness == Brightness.light
-              ? Color(0xFFFFFFFF) // Color for light theme
-              : Consts.FG_COLOR,
-          centerTitle: true,
-          title: const Text('Language',
-            style: TextStyle(
-              //color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'GilroyBold', // Apply Gilroy font family
-            ),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? Color(0xFFFFFFFF) // Color for light theme
+            : Consts.FG_COLOR,
+        centerTitle: true,
+        leading: widget.isFirstLaunch
+            ? null
+            : IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Icon(
+            Icons.arrow_back_ios_new_outlined,
+            size: 18,
+          ),
+        ),
+        title: Text(
+          AppLocalizations.of(context)!.languages,
+          style: TextStyle(
+            fontFamily: 'Aldrich',
+            fontSize: 18,
           ),
         ),
       ),
       body:  Padding(
-        padding: EdgeInsets.all(screenWidth * 0.04),
+        padding: EdgeInsets.all(screenWidth * 0.035),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -162,21 +177,23 @@ class _languagesScreenState extends State<languagesScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(screenWidth * 0.05),
                       child: Card(
+                        color: currentLanguage.isSelected ? Colors.grey : Colors.white,
                         child: ListTile(
                           onTap: () {
                             _setSelectedLanguage(currentLanguage);
                           },
                           title: Text(
                             currentLanguage.name,
+                            style: TextStyle(
+                              color: currentLanguage.isSelected ? Colors.white : Colors.black,
+                            ),
                           ),
-                          trailing: currentLanguage.isSelected ? Icon(Icons.check, color: Consts.COLOR) : null,
                         ),
                       ),
                     ),
                   );
                 },
               ),
-
             ),
           ],
         ),

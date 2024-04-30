@@ -6,7 +6,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:vault/screens/album.dart';
 import 'package:vault/screens/homepage.dart';
 import 'package:vault/widgets/custombutton.dart';
@@ -143,7 +142,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Row(
                   children: [
                     Column(
@@ -163,7 +162,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(vertical: 1.0, horizontal: 0.0),
+                const EdgeInsets.symmetric(vertical: 1.0, horizontal: 8.0),
                 child: Row(
                   children: [
                     Column(
@@ -183,7 +182,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(vertical: 1,),
+                const EdgeInsets.symmetric(vertical: 1.0, horizontal: 8.0),
                 child: Row(
                   children: [
                     Column(
@@ -192,7 +191,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                           'Date Taken :  ${properties['dateTaken']}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontFamily: 'Gilroy',
                           ),
                         )
@@ -270,18 +269,22 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                               // Image widget inside the Stack
                               Positioned(
                                 child: ClipOval(
-                                  child: Theme.of(context).brightness == Brightness.light
-                                            ? ColorFiltered(colorFilter: ColorFilter.mode(
-                                            Colors.black, BlendMode.srcIn),
-                                        child: SvgPicture.asset(
-                                            'assets/deletedailogue.svg',)
-                                  )// Color for light theme
-                                            : SvgPicture.asset(
+                                  child: ColorFiltered(
+                                    colorFilter: ColorFilter.mode(
+                                        Theme.of(context).brightness ==
+                                            Brightness.light
+                                            ? Colors
+                                            .transparent // Color for light theme
+                                            : Colors.white,
+                                        BlendMode.srcIn),
+                                    child: SvgPicture.asset(
                                       'assets/deletedailogue.svg',
                                       // Replace with the path to your image
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                 ),
                               ),
-                                ),
                             ],
                           )
                         ],
@@ -305,7 +308,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -335,7 +338,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
                       // Set button size
                       backgroundColor: MaterialStateProperty.all(
                         Theme.of(context).brightness == Brightness.light
@@ -358,7 +361,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       _handleDeleteTap();
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
                       backgroundColor: MaterialStateProperty.all(
                           Theme.of(context).brightness == Brightness.light
                               ? Color(0xFFDD4848)
@@ -448,6 +451,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               TextButton(
                 onPressed: () {
                   // Add your cancel logic here
+                  Navigator.pop(context);
                   Navigator.pop(context);
                 },
                 style: ButtonStyle(
@@ -647,75 +651,6 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     );
   }
 
-  void _handleShareTap() async {
-    try {
-      // Get the image file path
-      String imagePath = widget.imageFile.path;
-
-      // Share the image file
-      await Share.shareFiles([imagePath], text: 'Sharing image');
-
-      // Notify the user that the image has been shared
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image shared successfully.')));
-    } catch (e) {
-      // Handle any errors that may occur during sharing
-      print('Error sharing image: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing image.')));
-    }
-  }
-
-  // void _handleUnlockTap() async {
-  //   if (_selectedIndex == 1) {
-  //     // Check if the image file exists before attempting to delete
-  //     bool fileExists = await widget.imageFile.exists();
-  //     print('Does the file exist? $fileExists');
-  //
-  //     if (!fileExists) {
-  //
-  //       return; // Exit since file doesn't exist
-  //     }
-  //     // Attempt to delete the image file
-  //     try {
-  //       // Delete the file
-  //       await widget.imageFile.delete();
-  //
-  //       // Open the Hive box
-  //       final box = await Hive.openBox(widget.folderName ?? 'defaultFolderName'); // Provide a default folder name if widget.folderName is null
-  //       print("MK: boxKeys:2 ${box.keys} || ${widget.folderName}");
-  //       // Find the key associated with the file path
-  //       String? keyToRemove;
-  //       for (var key in box.keys) {
-  //         final value = box.get(key);
-  //         final filePath = '${(await getTemporaryDirectory()).path}/$key.png';
-  //         if (value is Uint8List && filePath == widget.imageFile.path) {
-  //           keyToRemove = key;
-  //           break;
-  //         }
-  //       }
-  //
-  //       // Delete the associated key from the Hive box
-  //       if (keyToRemove != null) {
-  //         await box.delete(keyToRemove);
-  //       }
-  //
-  //       // If there is a callback function to notify the parent page, call it
-  //       if (widget.onImageRemoved != null) {
-  //         widget.onImageRemoved!(widget.imageFile);
-  //       }
-  //
-  //       // Notify the user that the image has been deleted
-  //       Navigator.push(context,
-  //        MaterialPageRoute(builder: (context) =>
-  //       HomePage()));
-  //     } catch (e) {
-  //       // Handle any errors that may occur during the deletion
-  //       print('Error deleting image file: $e');
-  //     }
-  //   }
-  // }
-
   Future<void> saveImageToGallery(File imageFile) async {
     try {
       final result = await ImageGallerySaver.saveFile(imageFile.path);
@@ -728,6 +663,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     } catch (e) {
       print('Error saving image to gallery: $e');
     }
+
+
   }
 
   void _handleDeleteTap() async {

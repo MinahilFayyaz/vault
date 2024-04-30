@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -180,7 +182,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             title: Text(
-              'LOCKER',
+                //AppLocalizations.of(context)!.share,
+              "Locker",
               style: TextStyle(
                 //color: Colors.white,
                 fontSize: 20,
