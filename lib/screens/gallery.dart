@@ -364,6 +364,16 @@ class _GalleryScreenState extends State<GalleryScreen> {
             ? Color(0xFFFFFFFF) // Color for light theme
             : Consts.FG_COLOR,
         title: Text(widget.folderName!),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 20.0),
+            child: Text(selectedCount.toString(),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18
+            ),),
+          )
+        ],
       ),
       body: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

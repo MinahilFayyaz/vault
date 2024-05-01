@@ -107,10 +107,12 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       children: [
                         SizedBox(height: size.height * 0.07),
-                        SvgPicture.asset(
+                        Theme.of(context).brightness == Brightness.light
+                         ? SvgPicture.asset(
                           'assets/padlock 2.svg',
                           height: size.height * 0.1,
-                        ),
+                        )
+                        : SvgPicture.asset("assets/padlock 3.svg"),
                         SizedBox(height: size.height * 0.03),
                         Text(
                           'Enter Your Passcode',

@@ -25,10 +25,10 @@ class PremiumScreen extends StatelessWidget {
                 children: [
                   Container(
                     width: double.infinity,
-                    height: 333, // Set the desired height
+                    height: 437, // Set the desired height
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/cyber-security-security-password-login-online-concept-hands-typing-entering-username_620652-63 1.png'),
+                        image: AssetImage('assets/image 16.png'),
                         fit: BoxFit.cover, // Cover the entire container with the image
                       ),
                     ),
@@ -40,15 +40,15 @@ class PremiumScreen extends StatelessWidget {
                         Navigator.pop(context);
                       },
                       child: Align(
-                        alignment: Alignment.topLeft,
-                        child: SvgPicture.asset('assets/cancel 1.svg'),
+                        alignment: Alignment.topRight,
+                        child: SvgPicture.asset('assets/cancel.svg'),
                       ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 200.0),
+                    padding: const EdgeInsets.only(top: 300.0, right: 100),
                     child: Align(
-                      alignment: Alignment.bottomCenter, // Align to the bottom center of the image
+                      alignment: Alignment.bottomLeft, // Align to the bottom center of the image
                       child: Container(
                         width: double.infinity, // Stretch to the full width
                         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), // Optional padding for aesthetics
@@ -57,23 +57,21 @@ class PremiumScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'UPGRADE TO PREMIUM',
+                              'Gallery Vault PRO',
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white, // Set text color
-                              ),
-                              textAlign: TextAlign.center, // Center the text
+                              ),// Center the text
                             ),
                             SizedBox(height: 8), // Optional spacing between title and subtitle
                             Text(
-                              'Unlock All the Premium Features',
+                              'Gallery Vault Pro offers premium features to loud up the sound. Join now and enjoy all premium features.',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white, // Set text color
-                              ),
-                              textAlign: TextAlign.center, // Center the text
+                              ),// Center the text
                             ),
                           ],
                         ),
@@ -166,7 +164,7 @@ class PremiumScreen extends StatelessWidget {
               SizedBox(height: size.height * 0.02,),
               GestureDetector(
                 onTap: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=> Permission()));
+
                 },
                 child: Padding(padding: EdgeInsets.symmetric(
                   horizontal: size.width * 0.05

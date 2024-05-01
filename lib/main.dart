@@ -9,9 +9,7 @@ import 'consts/consts.dart';
 import 'consts/style.dart';
 import 'controller/language_change_controller.dart';
 import 'l10n/l10n.dart';
-import 'provider/addpasswordprovider.dart';
 import 'provider/authprovider.dart';
-import 'provider/generatedpassswordprovideer.dart';
 import 'provider/onboardprovider.dart';
 import 'provider/themeprovider.dart';
 import 'screens/splash_screen.dart';
@@ -51,12 +49,6 @@ class MyApp extends StatelessWidget {
           ),
           ChangeNotifierProvider(
             create: (context) => DatabaseService(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => AddPasswordProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => GeneratedPasswordProvider(),
           ),
         ],
         builder: (context, child) {

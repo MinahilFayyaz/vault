@@ -10,6 +10,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../consts/consts.dart';
+import '../permission.dart';
 import 'gallery.dart';
 import 'imagepreview.dart';
 
@@ -300,13 +301,27 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           actions: [
             GestureDetector(
               onTap: () async {
-                dynamic res = await Navigator.push(
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+                if (isFirstLaunch) {
+                  prefs.setBool('isFirstLaunch', false);
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            GalleryScreen(folderName: widget.folderName)));
-                if (res == true) {
-                  setState(() {});
+                      builder: (context) => Permission(folderName: widget.folderName),
+                    ),
+                  );
+                } else {
+                  // If it's not the first launch, navigate to the gallery screen
+                  dynamic res = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GalleryScreen(folderName: widget.folderName),
+                    ),
+                  );
+                  if (res == true) {
+                    setState(() {});
+                  }
                 }
               },
               child: Padding(

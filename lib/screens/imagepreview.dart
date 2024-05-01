@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vault/screens/album.dart';
 import 'package:vault/screens/homepage.dart';
 import 'package:vault/widgets/custombutton.dart';
@@ -61,6 +62,21 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   }
 
   void showImagePropertiesDialog(Map<String, dynamic> properties) {
+    String fileNameWithExtension = widget.imageName.split('/').last;
+
+    // Get the file name without extension
+    String fileName = fileNameWithExtension.split('.').first;
+
+    // Get the file extension
+    String fileExtension = fileNameWithExtension.split('.').last;
+
+    // Shorten the file name if it's too long
+    String shortFileName =
+    fileName.length > 10 ? fileName.substring(0, 7) + '...' : fileName;
+
+    // Combine the short file name with the file extension
+    String shortImageName = '$shortFileName.$fileExtension';
+    // print("MK: foldername: ${widget.folderName}");return;
     showDialog(
       context: context,
       builder: (context) {
@@ -123,7 +139,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                widget.imageName,
+                                shortImageName,
                                 style: const TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.w700),
                               ),
@@ -232,7 +248,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   }
 
   void _showConfirmationDialog() {
-    // print("MK: foldername: ${widget.folderName}");return;
+    // Get the file name with extension
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -381,94 +397,6 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void showImageExported() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).brightness == Brightness.light
-              ? Colors.white // Color for light theme
-              : Consts.BG_COLOR,
-          title: Center(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Positioned(
-                                  child: ClipOval(
-                                    child: SvgPicture.asset(
-                                      'assets/Group 21149.svg',
-                                      // Replace with the path to your image
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          ],
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(top: 3.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Exported Successfully!',
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.w700),
-                              ),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          content: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextButton(
-                onPressed: () {
-                  // Add your cancel logic here
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                style: ButtonStyle(
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                  ),
-                  minimumSize: MaterialStateProperty.all(Size(285, 44)),
-                  // Set button size
-                  backgroundColor: MaterialStateProperty.all(
-                      Consts.COLOR), // Set background color
-                ),
-                child: Text(
-                  'Continue',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
               ),
             ],
           ),
@@ -634,11 +562,19 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             ],
             type: BottomNavigationBarType.fixed,
             currentIndex: _selectedIndex,
-            onTap: (index) {
+            onTap: (index) async {
               setState(() {
                 _selectedIndex = index;
-                if (_selectedIndex == 1) {
-                  saveImageToGallery(widget.imageFile);
+                if (_selectedIndex == 0) {
+    if (fileExtension.toLowerCase() == 'mp4' ||
+    fileExtension.toLowerCase() == 'mov') {
+    shareVideo(widget.imageFile);
+    } else {
+      shareImage(widget.imageFile);
+    }
+    }
+                else if (_selectedIndex == 1) {
+                  _showConfirmationOutDialog();
                   //_handleUnlockTap();
                 } else if (_selectedIndex == 2) {
                   _showConfirmationDialog();
@@ -650,12 +586,184 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       ),
     );
   }
+  Future<void> shareImage(File imageFile) async {
+    try {
+      // Share the image file
+      await Share.shareFiles([imageFile.path], text: 'Check out this image!');
+    } catch (e) {
+      // Handle error
+      print('Error sharing image: $e');
+    }
+  }
 
+  Future<void> shareVideo(File videoFile) async {
+    try {
+      // Share the video file
+      await Share.shareFiles([videoFile.path], text: 'Check out this video!');
+    } catch (e) {
+      // Handle error
+      print('Error sharing video: $e');
+    }
+  }
+  void _showConfirmationOutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.light
+              ? Colors.white // Color for light theme
+              : Consts.BG_COLOR, //
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 70.0,
+                                height: 40.0,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).brightness ==
+                                      Brightness.light
+                                      ? Color(
+                                      0xFFF5F5F5) // Color for light theme
+                                      : Consts.FG_COLOR,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              // Image widget inside the Stack
+                              Positioned(
+                                child: ClipOval(
+                                  child: ColorFiltered(
+                                    colorFilter: ColorFilter.mode(
+                                        Theme.of(context).brightness ==
+                                            Brightness.light
+                                            ? Colors
+                                            .black // Color for light theme
+                                            : Colors.white,
+                                        BlendMode.srcIn),
+                                    child: SvgPicture.asset(
+                                      'assets/Group.svg',
+                                      // Replace with the path to your image
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(top: 3.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Move Out',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Are you sure you want to move\n 1 item(s)out the GalleryVault?',
+                      style: TextStyle(
+                          fontSize: 16,
+                          color:
+                          Theme.of(context).brightness == Brightness.light
+                              ? Color(0x7F222222)
+                              : Colors.white.withOpacity(0.5)),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      // Add your cancel logic here
+                      Navigator.pop(context);
+                    },
+                    style: ButtonStyle(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      // Set button size
+                      backgroundColor: MaterialStateProperty.all(
+                        Theme.of(context).brightness == Brightness.light
+                            ? Color(0xFFF5F5F5) // Color for light theme
+                            : Consts.FG_COLOR,
+                      ), // Set background color
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                          color:
+                          Theme.of(context).brightness == Brightness.light
+                              ? Color(0x7F222222)
+                              : Colors.white.withOpacity(0.5)),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      saveImageToGallery(widget.imageFile);
+                    },
+                    style: ButtonStyle(
+                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      backgroundColor: MaterialStateProperty.all(Consts.COLOR),
+                      shape: MaterialStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    child: const Text(
+                      'Confirm',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
   Future<void> saveImageToGallery(File imageFile) async {
     try {
       final result = await ImageGallerySaver.saveFile(imageFile.path);
       if (result['isSuccess']) {
-        showImageExported();
+        Navigator.pop(context);
+
         print('Image saved to gallery successfully.');
       } else {
         print('Failed to save image to gallery.');
@@ -664,9 +772,82 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       print('Error saving image to gallery: $e');
     }
 
+    bool fileExists = await widget.imageFile.exists();
+    print('Does the file exist? $fileExists');
 
+    if (!fileExists) {
+      print(
+          'The image file does not exist at path: ${widget.imageFile.path}');
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('The image file does not exist.')));
+      return; // Exit since file doesn't exist
+    }
+
+    // Attempt to delete the image file
+    try {
+      // Delete the file
+
+      print('Video file path before deletion: ${widget.imageFile.path}');
+      // Open the Hive box
+      final box = await Hive.openBox(widget.folderName ??
+          'defaultFolderName'); // Provide a default folder name if widget.folderName is null
+
+      print(
+          "MK: boxKeys:1 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
+      String? keyToRemove;
+      for (var key in box.keys) {
+
+        // await box.delete(key);
+        // continue;
+
+        print("key to remove $keyToRemove");
+        final value = box.get(key);
+
+        // String extension =
+        //     widget.imageFile.path.split('.').last.toLowerCase();
+
+        final filePath =
+            '${(await getTemporaryDirectory()).path}/$key.png';
+        if (value is Uint8List && filePath == widget.imageFile.path) {
+          keyToRemove = key;
+          break;
+        } else if (value is String) {
+          print("MK: $value | ${widget.imageFile.path}");
+          print("MK: value is string and ${File(value).path == widget.imageFile.path}");
+          if (File(value).path == widget.imageFile.path) {
+            keyToRemove = key;
+            break;
+          }
+        }
+      }
+
+      print("key to remove $keyToRemove ");
+
+      // Delete the associated key from the Hive box
+      if (keyToRemove != null) {
+        await widget.imageFile.delete();
+        await box.delete(keyToRemove);
+      } else {}
+
+      // If there is a callback function to notify the parent page, call it
+      if (widget.onImageRemoved != null) {
+        widget.onImageRemoved!(widget.imageFile);
+      }
+
+      print('Video file path after deletion: ${widget.imageFile.path}');
+      // Notify the user that the image has been deleted
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image unlocked successfully.')));
+
+      print('Image deleted successfully.');
+
+    } catch (e) {
+      // Handle any errors that may occur during the deletion
+      print('Error deleting image file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting image file.')));
+    }
   }
-
   void _handleDeleteTap() async {
     if (_selectedIndex == 2) {
       // Check if the image file exists before attempting to delete

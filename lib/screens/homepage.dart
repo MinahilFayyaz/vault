@@ -18,9 +18,7 @@ import 'package:vault/screens/settings/premium.dart';
 import '../consts/consts.dart';
 import '../utils/utils.dart';
 import 'album.dart';
-import 'generatorpage.dart';
 import 'settings/settings.dart';
-import 'vault/vaultpage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -249,7 +247,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     Container(
-                      alignment: Alignment.centerLeft,
+                      alignment: Alignment.topLeft,
                       child: Wrap(
                         alignment: WrapAlignment.start,
                         runAlignment: WrapAlignment.start,
@@ -319,7 +317,6 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-
                     SizedBox(height: screenHeight * 0.01),
                     Row(
                       children: [
@@ -346,58 +343,61 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     SizedBox(height: screenHeight * 0.02),
-                    Wrap(
-                      alignment: WrapAlignment.start,
-                      runAlignment: WrapAlignment.start,
-                      spacing: screenWidth * 0.02, // Add spacing between the containers
-                      runSpacing: screenHeight * 0.01, // Add spacing between the rows
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            // Open the gallery
-                            final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-                            if (pickedFile != null) {
-                              setState(() {
-                                // Add the picked image to the list of selected images
-                                selectedImages.add(File(pickedFile.path));
-                                _saveFolderNames();
-                              });
-                            }
-                          },
-                          child: Container(
-                            height: screenHeight * 0.13,
-                            width: screenWidth * 0.29,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.light
-                                  ? Color(0xFFF5F5F5) // Color for light theme
-                                  : Consts.FG_COLOR,
-                              borderRadius: BorderRadius.circular(screenHeight * 0.02),
-                            ),
-                            child: Icon(
-                              Icons.add,
-                              size: 30,
-                            ),
-                          ),
-                        ),
-                        // Dynamically generate containers for each selected image
-                        for (File image in selectedImages)
+                    Container(
+                      alignment: Alignment.topLeft,
+                      child: Wrap(
+                        alignment: WrapAlignment.start,
+                        runAlignment: WrapAlignment.start,
+                        spacing: screenWidth * 0.02, // Add spacing between the containers
+                        runSpacing: screenHeight * 0.01, // Add spacing between the rows
+                        children: [
                           GestureDetector(
-                            onTap: () {
-                              _showImageOptionsBottomSheet(context, image);
+                            onTap: () async {
+                              // Open the gallery
+                              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                              if (pickedFile != null) {
+                                setState(() {
+                                  // Add the picked image to the list of selected images
+                                  selectedImages.add(File(pickedFile.path));
+                                  _saveFolderNames();
+                                });
+                              }
                             },
                             child: Container(
                               height: screenHeight * 0.13,
                               width: screenWidth * 0.29,
-                              child: ClipRRect(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).brightness == Brightness.light
+                                    ? Color(0xFFF5F5F5) // Color for light theme
+                                    : Consts.FG_COLOR,
                                 borderRadius: BorderRadius.circular(screenHeight * 0.02),
-                                child: Image.file(
-                                  image,
-                                  fit: BoxFit.cover, // Fit the image to cover the container
-                                ),
+                              ),
+                              child: Icon(
+                                Icons.add,
+                                size: 30,
                               ),
                             ),
                           ),
-                      ],
+                          // Dynamically generate containers for each selected image
+                          for (File image in selectedImages)
+                            GestureDetector(
+                              onTap: () {
+                                _showImageOptionsBottomSheet(context, image);
+                              },
+                              child: Container(
+                                height: screenHeight * 0.13,
+                                width: screenWidth * 0.29,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                                  child: Image.file(
+                                    image,
+                                    fit: BoxFit.cover, // Fit the image to cover the container
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -461,7 +461,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.topLeft,
                   child: Wrap(
                     alignment: WrapAlignment.start,
                     runAlignment: WrapAlignment.start,

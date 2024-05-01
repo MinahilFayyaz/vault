@@ -177,7 +177,6 @@ class _languagesScreenState extends State<languagesScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(screenWidth * 0.05),
                       child: Card(
-                        color: currentLanguage.isSelected ? Colors.grey : Colors.white,
                         child: ListTile(
                           onTap: () {
                             _setSelectedLanguage(currentLanguage);
@@ -185,9 +184,12 @@ class _languagesScreenState extends State<languagesScreen> {
                           title: Text(
                             currentLanguage.name,
                             style: TextStyle(
-                              color: currentLanguage.isSelected ? Colors.white : Colors.black,
                             ),
                           ),
+                          trailing: currentLanguage.isSelected
+                          ? Icon(Icons.check,
+                          color: Consts.COLOR,)
+                              : null
                         ),
                       ),
                     ),

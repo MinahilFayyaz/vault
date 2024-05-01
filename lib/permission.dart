@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:vault/screens/gallery.dart';
 
 import 'consts/consts.dart';
 import 'screens/homepage.dart';
 import 'widgets/custombutton.dart';
 
-class Permission extends StatelessWidget {
-  const Permission({Key? key}) : super(key: key);
+class Permission extends StatefulWidget {
+  const Permission({Key? key, required this.folderName}) : super(key: key);
 
+  final String? folderName;
+
+  @override
+  State<Permission> createState() => _PermissionState();
+}
+
+class _PermissionState extends State<Permission> {
   final Color fgcolor = Consts.FG_COLOR;
 
   @override
@@ -70,9 +78,12 @@ class Permission extends StatelessWidget {
                 ),
                 child: CustomButton(
                   ontap: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => HomePage(),
+                    dynamic res = Navigator.push(context, MaterialPageRoute(
+                      builder: (context) => GalleryScreen(folderName: widget.folderName),
                     ));
+                    if (res == true) {
+                      setState(() {});
+                    }
                   },
                   buttontext: 'Got it',
                 ),
