@@ -12,11 +12,16 @@ class AppIcons extends StatefulWidget {
 
 class _AppIconsState extends State<AppIcons> {
   int selectedIconIndex = 0;
-  List<String> iconNames = ['icon1', 'icon2', 'icon3'];
+  List<String> iconNames = ['icon1', 'icon2', 'icon3', 'icon4', 'icon5', 'icon6', 'icon7', 'icon8'];
   List<String> imageFiles = [
-    'assets/icon1.png',
-    'assets/icon2.png',
-    'assets/icon3.png',
+    'assets/icon.png',
+    'assets/Rectangle 4921.png',
+    'assets/Rectangle 4921-2.png',
+    'assets/Rectangle 4922.png',
+    'assets/Rectangle 4923.png',
+    'assets/Rectangle 4924-2.png',
+    'assets/Rectangle 4924.png',
+    'assets/Rectangle 4925.png'
   ];
 
   @override
@@ -52,13 +57,25 @@ class _AppIconsState extends State<AppIcons> {
             // Row of app icons
             Padding(
               padding: const EdgeInsets.only(top: 28.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(iconNames.length, (index) {
-                  return buildIconTile(index);
-                }),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(iconNames.length ~/ 2, (index) {
+                      return buildIconTile(index);
+                    }),
+                  ),
+                  SizedBox(height: 10), // Add some space between rows
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(iconNames.length ~/ 2, (index) {
+                      return buildIconTile(index + iconNames.length ~/ 2);
+                    }),
+                  ),
+                ],
               ),
             ),
+
             // Spacer to push the button to the bottom
             Expanded(child: SizedBox()),
             // Apply button at the bottom

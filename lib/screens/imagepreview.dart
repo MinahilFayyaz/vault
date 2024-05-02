@@ -532,7 +532,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       BlendMode.srcIn,
                     ),
                     child: SvgPicture.asset(
-                      'assets/Frame.svg',
+                      'assets/padlock 6.svg',
                     ),
                   ),
                 ),
@@ -651,7 +651,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                                             : Colors.white,
                                         BlendMode.srcIn),
                                     child: SvgPicture.asset(
-                                      'assets/Group.svg',
+                                      'assets/lock-padlock-symbol-for-security-interface 2.svg',
                                       // Replace with the path to your image
                                       fit: BoxFit.cover,
                                     ),

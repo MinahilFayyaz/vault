@@ -1,7 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -20,11 +21,11 @@ class FolderContentsPage extends StatefulWidget {
   final Function(List<File>)? updateFolderContents;
 
   const FolderContentsPage({
-    Key? key,
+    super.key,
     required this.folderName,
     required this.updateFolderContents,
     required this.folderContents,
-  }) : super(key: key);
+  });
 
   @override
   State<FolderContentsPage> createState() => _FolderContentsPageState();
@@ -110,10 +111,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     // Open the Hive box for the specified folder
     final box = await Hive.openBox(widget.folderName!);
     List<File> retrievedImages = [];
-
-    print(
-        "MK: boxKeys:0 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
-
     // Iterate through the keys in the box
     for (var key in box.keys) {
       final value = box.get(key);
@@ -131,9 +128,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
         }
       } else if (value is String) {
         // Assume it's a video file path
-        print('value is string');
         final file = File(value);
-        // print('MK: is video Exists: ${key}');
         // Assume it's a video file path
         if (await file.exists()) {
           retrievedImages.add(File(value));
@@ -159,7 +154,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 child: Container(
                   width: 375,
                   height: 812,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     //color: Colors.black.withOpacity(0.800000011920929),
                   ),
                 )),
@@ -171,14 +166,14 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 child: Container(
                   width: 375,
                   height: 812,
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SvgPicture.asset('assets/Layer 88.svg'),
-                      Center(
+                      const Center(
                         child: Text(
                           'Add Files',
                           style: TextStyle(
@@ -187,17 +182,16 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 8),
-                      Center(
-                        child: Text(
-                          'You can add Photos and Videos to\nthe album by tapping +',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                          ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'You can add Photos and Videos to\nthe album by tapping +',
+                       textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -208,13 +202,19 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
       },
     );
   }
-
+  List<dynamic>? _mediaData;
+  @override
   void initState() {
     super.initState();
     // Show the dialog only when the app is first launched
     _checkFirstLaunch();
     retrieveAndCombineImages();
     //_showAddFilesDialog(context);
+    retrieveMediaFromHive().then((data) {
+      setState(() {
+        _mediaData = data;
+      });
+    });
   }
 
   void _checkFirstLaunch() async {
@@ -240,8 +240,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     // Create a temporary directory and save the image file
     final tempDir = await getTemporaryDirectory();
 
-    print(
-        "MK: boxKeys:4 ${box.keys} || ${widget.folderName} || ${box.keys.length}");
 
     for (var key in box.keys) {
       final value = box.get(key);
@@ -288,11 +286,11 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
         preferredSize: Size.fromHeight(screenHeight * 0.07),
         child: AppBar(
           backgroundColor: Theme.of(context).brightness == Brightness.light
-              ? Color(0xFFFFFFFF) // Color for light theme
+              ? const Color(0xFFFFFFFF) // Color for light theme
               : Consts.FG_COLOR,
           title: Text(
             widget.folderName!,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w400,
               fontFamily: 'GilroyBold',
@@ -347,7 +345,10 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
       body: FutureBuilder<List<dynamic>>(
         future: retrieveMediaFromHive(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting || _mediaData == null) {
+            int shimmerCount = snapshot.data != null ? snapshot.data!.length : 0;
+            print('media data : $_mediaData');
+            print('snapshot data : ${snapshot.data?.length}');
             return Shimmer.fromColors(
               baseColor: Colors.grey[300]!,
               highlightColor: Colors.grey[100]!,
@@ -357,7 +358,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                   crossAxisSpacing: 3,
                   mainAxisSpacing: 3,
                 ),
-                itemCount: 9, // Placeholder count for shimmer effect
+                itemCount: shimmerCount, // Placeholder count for shimmer effect
                 itemBuilder: (context, index) {
                   return Container(
                     decoration: BoxDecoration(
@@ -370,7 +371,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
             );
           } else if (snapshot.hasData) {
             List<dynamic> combinedMedia = snapshot.data!;
-            print('MK: combinedMedia: ${combinedMedia}');
             if (combinedMedia.isEmpty) {
               return Center(
                 child: Column(
@@ -407,7 +407,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 itemCount: combinedMedia.length,
                 itemBuilder: (context, index) {
                   final media = combinedMedia[index];
-                  print('MK: media is File: ${media is File}');
                   if (media is File) {
                     return GestureDetector(
                       onTap: () {
@@ -496,7 +495,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                               );
                             },
                             child: Padding(
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                   vertical: 16.0, horizontal: 16),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),

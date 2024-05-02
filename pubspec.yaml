@@ -63,6 +63,7 @@ dependencies:
   get_storage:
   shimmer:
   get:
+  change_app_package_name:
 
 
 dev_dependencies:
@@ -126,6 +127,8 @@ flutter:
   assets:
   - assets/
   - assets/settings/
+  - assets/icon.png
+  - assets/padlock 6.svg
 
   #   - images/a_dot_ham.jpeg
   fonts:
