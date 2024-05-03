@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:chewie/chewie.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
@@ -13,6 +13,7 @@ import 'package:vault/widgets/custombutton.dart';
 import 'package:video_player/video_player.dart';
 import '../consts/consts.dart';
 import 'package:image/image.dart' as img;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'gallery.dart';
 
@@ -158,13 +159,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
                 child: Row(
                   children: [
                     Column(
                       children: [
                         Text(
-                          'File Size :  ${properties['fileSize']} bytes',
+                          AppLocalizations.of(context)!.fileSize +': ${properties['fileSize']} bytes',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
@@ -178,13 +179,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(vertical: 1.0, horizontal: 8.0),
+                const EdgeInsets.symmetric(vertical: 1.0, horizontal: 2.0),
                 child: Row(
                   children: [
                     Column(
                       children: [
                         Text(
-                          'Resolution :  ${properties['width']} x ${properties['height']} pixels',
+                          AppLocalizations.of(context)!.resolution +':  ${properties['width']} x ${properties['height']} pixels',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
@@ -198,16 +199,16 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(vertical: 1.0, horizontal: 8.0),
+                const EdgeInsets.symmetric(vertical: 1.0, horizontal: 2.0),
                 child: Row(
                   children: [
                     Column(
                       children: [
                         Text(
-                          'Date Taken :  ${properties['dateTaken']}',
+                          AppLocalizations.of(context)!.dateTaken + ':  ${properties['dateTaken']}',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontFamily: 'Gilroy',
                           ),
                         )
@@ -236,7 +237,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       Consts.COLOR), // Set background color
                 ),
                 child: Text(
-                  'Ok',
+                  AppLocalizations.of(context)!.ok,
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
@@ -311,7 +312,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Delete',
+                              AppLocalizations.of(context)!.delete,
                               style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.w700),
                             ),
@@ -324,14 +325,14 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'The Photo will be completely\ndeleted and can not be\nrecovered',
+                      AppLocalizations.of(context)!.thePhotoWillBeCompletelyDeleted +'\n'+ AppLocalizations.of(context)!.andCannotBeRecovered,
                       style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color:
                           Theme.of(context).brightness == Brightness.light
                               ? Color(0x7F222222)
@@ -354,7 +355,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       // Set button size
                       backgroundColor: MaterialStateProperty.all(
                         Theme.of(context).brightness == Brightness.light
@@ -363,7 +364,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       ), // Set background color
                     ),
                     child: Text(
-                      'Cancel',
+                      AppLocalizations.of(context)!.cancel,
                       style: TextStyle(
                           color:
                           Theme.of(context).brightness == Brightness.light
@@ -377,7 +378,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       _handleDeleteTap();
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       backgroundColor: MaterialStateProperty.all(
                           Theme.of(context).brightness == Brightness.light
                               ? Color(0xFFDD4848)
@@ -388,8 +389,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                         ),
                       ),
                     ),
-                    child: const Text(
-                      'Delete',
+                    child:  Text(
+                      AppLocalizations.of(context)!.delete,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -427,8 +428,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     // Combine the short file name with the file extension
     String shortImageName = '$shortFileName.$fileExtension';
 
-    print('file extension ${fileExtension.toLowerCase()}');
-    print('video file ${widget.imageFile}');
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Media Preview Screen');
+
 
     return Scaffold(
       //backgroundColor: Consts.BG_COLOR,
@@ -453,6 +454,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
                 // Show the image properties in a dialog
                 showImagePropertiesDialog(properties);
+                FirebaseAnalytics.instance.logEvent(
+                  name: 'media_preview_properties',
+                  parameters: <String, dynamic>{
+                    'activity': 'navigated to media properties',
+                  },
+                );
               },
               child: Padding(
                 padding: EdgeInsets.all(screenWidth * 0.02),
@@ -572,12 +579,30 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     } else {
       shareImage(widget.imageFile);
     }
+    FirebaseAnalytics.instance.logEvent(
+      name: 'media_preview_share_media',
+      parameters: <String, dynamic>{
+        'activity': 'navigated to share media',
+      },
+    );
     }
                 else if (_selectedIndex == 1) {
                   _showConfirmationOutDialog();
+                  FirebaseAnalytics.instance.logEvent(
+                    name: 'media_preview_move_out',
+                    parameters: <String, dynamic>{
+                      'activity': 'media moved out from galleryvault',
+                    },
+                  );
                   //_handleUnlockTap();
                 } else if (_selectedIndex == 2) {
                   _showConfirmationDialog();
+                  FirebaseAnalytics.instance.logEvent(
+                    name: 'media_preview_delete',
+                    parameters: <String, dynamic>{
+                      'activity': 'media deleted from galleryvault',
+                    },
+                  );
                 }
               });
             },
@@ -668,7 +693,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Move Out',
+                              AppLocalizations.of(context)!.moveOut,
                               style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.w700),
                             ),
@@ -681,14 +706,14 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Are you sure you want to move\n 1 item(s)out the GalleryVault?',
+                      AppLocalizations.of(context)!.areYouSureYouWantToMove +"\n 1 item(s)"+ AppLocalizations.of(context)!.outTheGalleryVault,
                       style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color:
                           Theme.of(context).brightness == Brightness.light
                               ? Color(0x7F222222)
@@ -711,7 +736,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       // Set button size
                       backgroundColor: MaterialStateProperty.all(
                         Theme.of(context).brightness == Brightness.light
@@ -720,7 +745,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       ), // Set background color
                     ),
                     child: Text(
-                      'Cancel',
+                      AppLocalizations.of(context)!.cancel,
                       style: TextStyle(
                           color:
                           Theme.of(context).brightness == Brightness.light
@@ -734,7 +759,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       saveImageToGallery(widget.imageFile);
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       backgroundColor: MaterialStateProperty.all(Consts.COLOR),
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(
@@ -742,8 +767,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                         ),
                       ),
                     ),
-                    child: const Text(
-                      'Confirm',
+                    child: Text(
+                      AppLocalizations.of(context)!.confirm,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -778,8 +803,6 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     if (!fileExists) {
       print(
           'The image file does not exist at path: ${widget.imageFile.path}');
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('The image file does not exist.')));
       return; // Exit since file doesn't exist
     }
 
@@ -836,16 +859,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
       print('Video file path after deletion: ${widget.imageFile.path}');
       // Notify the user that the image has been deleted
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image unlocked successfully.')));
 
       print('Image deleted successfully.');
 
     } catch (e) {
       // Handle any errors that may occur during the deletion
       print('Error deleting image file: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting image file.')));
+
     }
   }
   void _handleDeleteTap() async {
@@ -857,8 +877,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       if (!fileExists) {
         print(
             'The image file does not exist at path: ${widget.imageFile.path}');
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('The image file does not exist.')));
+
         return; // Exit since file doesn't exist
       }
 
@@ -915,8 +934,6 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
         print('Video file path after deletion: ${widget.imageFile.path}');
         // Notify the user that the image has been deleted
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Image unlocked successfully.')));
 
         print('Image deleted successfully.');
 
@@ -927,8 +944,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       } catch (e) {
         // Handle any errors that may occur during the deletion
         print('Error deleting image file: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting image file.')));
+
       }
     }
   }

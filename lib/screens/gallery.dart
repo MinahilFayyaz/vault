@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:chewie/chewie.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hive/hive.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:vault/screens/homepage.dart';
-import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import '../consts/consts.dart';
-import 'gallerydatabaseretrieve.dart';
 import 'imagepreview.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class GalleryScreen extends StatefulWidget {
   final String? folderName;
@@ -52,14 +51,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Permission Required'),
-          content: const Text('Please grant permission to access photos.'),
+          title: Text(AppLocalizations.of(context)!.permissionRequired),
+          content: Text(AppLocalizations.of(context)!.pleaseGrantPermissionToAcsessPhotos),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('OK'),
+              child: Text(AppLocalizations.of(context)!.ok),
             ),
           ],
         );
@@ -69,7 +68,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   Future<void> _fetchImages() async {
     albums = await PhotoManager.getAssetPathList(onlyAll: true);
-    print('albums $albums');
+
     if (albums.isNotEmpty) {
       List<AssetEntity> media =
       await albums[0].getAssetListPaged(size: 60, page: currentPage);
@@ -358,7 +357,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // print('MK: selectedImagePaths: $selectedImagePaths');
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Gallery Screen');
     return WillPopScope(
       onWillPop: () async {
         Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
@@ -424,18 +423,32 @@ class _GalleryScreenState extends State<GalleryScreen> {
           onTap: (index) {
             if (index == 0) {
               _selectAllImages();
+              FirebaseAnalytics.instance.logEvent(
+                name: 'gallery_select_all',
+                parameters: <String, dynamic>{
+                  'activity': 'Selecting all media',
+                  'action': 'Select All Clicked',
+                },
+              );
             } else if (index == 1) {
               _showConfirmationDialog();
+              FirebaseAnalytics.instance.logEvent(
+                name: 'gallery_lock_all',
+                parameters: <String, dynamic>{
+                  'activity': 'lock Selected media',
+                  'action': 'lock Clicked',
+                },
+              );
             }
           },
-          items: const [
+          items:  [
             BottomNavigationBarItem(
               icon: Icon(Icons.select_all),
-              label: 'Select All',
+              label: AppLocalizations.of(context)!.selectAll,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.lock),
-              label: 'Lock',
+              label: AppLocalizations.of(context)!.lock,
             ),
           ],
         ),
@@ -569,7 +582,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Move In',
+                              AppLocalizations.of(context)!.moveIn,
                               style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.w700),
                             ),
@@ -582,12 +595,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
               ),
               Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 25.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Are you sure you want to move\n$selectedCount item(s)in the GalleryVault?',
+                    AppLocalizations.of(context)!.areYouSureYouWantToMove+'\n$selectedCount items(s)'+AppLocalizations.of(context)!.inTheGalleryVault+'?',
                       style: TextStyle(
                           fontSize: 16,
                           color:
@@ -612,7 +625,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       // Set button size
                       backgroundColor: MaterialStateProperty.all(
                         Theme.of(context).brightness == Brightness.light
@@ -621,7 +634,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       ), // Set background color
                     ),
                     child: Text(
-                      'Cancel',
+                      AppLocalizations.of(context)!.cancel,
                       style: TextStyle(
                           color:
                           Theme.of(context).brightness == Brightness.light
@@ -633,9 +646,16 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                       saveSelectedImagesToDatabase();
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'gallery_lock_confirm',
+                        parameters: <String, dynamic>{
+                          'activity': 'Selected all media locked',
+                          'action': 'Confirm Clicked',
+                        },
+                      );
                     },
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all(Size(120, 40)),
+                      minimumSize: MaterialStateProperty.all(Size(100, 40)),
                       backgroundColor: MaterialStateProperty.all(Consts.COLOR),
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(
@@ -643,8 +663,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                         ),
                       ),
                     ),
-                    child: const Text(
-                      'Confirm',
+                    child: Text(
+                      AppLocalizations.of(context)!.confirm,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,

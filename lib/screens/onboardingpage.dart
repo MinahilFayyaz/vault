@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import '../provider/onboardprovider.dart';
 import '../utils/utils.dart';
 import '../widgets/custombutton.dart';
 import 'auth/register.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class OnBoardingSceen extends StatefulWidget {
   const OnBoardingSceen({super.key});
@@ -33,7 +35,24 @@ class _OnBoardingSceenState extends State<OnBoardingSceen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Onboarding Screens');
+    List<OnBoardingContent> contents = [
+      OnBoardingContent(
+        image: 'assets/Group 21570.png',
+        title: AppLocalizations.of(context)!.areYouExhausted,
+        description: AppLocalizations.of(context)!.doNotWaitUntilYourPrivacyIs + '\n'+AppLocalizations.of(context)!.compromised +'-'+ AppLocalizations.of(context)!.takeActionNow +'!',
+      ),
+      OnBoardingContent(
+        image: 'assets/Group 21569.png',
+        title: AppLocalizations.of(context)!.secureYourData,
+        description: AppLocalizations.of(context)!.theAppRequiresAPasswordTo +'\n'+AppLocalizations.of(context)!.accessYourStoredMediaFiles,
+      ),
+      OnBoardingContent(
+        image: 'assets/Group 21567.png',
+        title: AppLocalizations.of(context)!.hidePhotosAndVideos,
+        description: AppLocalizations.of(context)!.hideYourCherishedPhotosAnd +'\n'+AppLocalizations.of(context)!.videosEffortlessly +"!",
+      ),
+    ];
     return Consumer<OnBoardingProvider>(builder: (context, provider, child) {
       return PopScope(
         canPop: false,
@@ -97,6 +116,12 @@ class _OnBoardingSceenState extends State<OnBoardingSceen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: CustomButton(
                     ontap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                      name: 'onboarding',
+                      parameters: <String, dynamic>{
+                        'activity': 'navigated to register',
+                      },
+                    );
                       if (provider.currentIndex == contents.length - 1) {
                         Navigator.pushReplacement(
                           context,
@@ -113,7 +138,7 @@ class _OnBoardingSceenState extends State<OnBoardingSceen> {
                       );
                     },
                     buttontext: provider.currentIndex == 0
-                        ? "Yes"
+                        ? AppLocalizations.of(context)!.yes
                         : 'Continue',
                   ),
                 ),
@@ -177,20 +202,4 @@ class OnBoardingContent {
   });
 }
 
-List<OnBoardingContent> contents = [
-  OnBoardingContent(
-    image: 'assets/Group 21570.png',
-    title: Consts.TITLE_1,
-    description: Consts.SUBTITLE_1,
-  ),
-  OnBoardingContent(
-    image: 'assets/Group 21569.png',
-    title: Consts.TITLE_2,
-    description: Consts.SUBTITLE_2,
-  ),
-  OnBoardingContent(
-    image: 'assets/Group 21567.png',
-    title: Consts.TITLE_3,
-    description: Consts.SUBTITLE_3,
-  ),
-];
+

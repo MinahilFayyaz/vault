@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:form_field_validator/form_field_validator.dart';
@@ -9,6 +10,7 @@ import '../../provider/authprovider.dart';
 import '../../utils/utils.dart';
 import '../../widgets/custombutton.dart';
 import '../homepage.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -51,7 +53,13 @@ class _LoginPageState extends State<LoginPage> {
 
     // Compare the entered pin with the master password
     if (pin == masterPassword) {
-      // Navigate to the home screen if the pin matches
+      FirebaseAnalytics.instance.logEvent(
+        name: 'login_passcode',
+        parameters: <String, dynamic>{
+          'activity': 'Navigating to HomeScreen',
+          'action': 'correct passcode',
+        },
+      );
       await Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -59,7 +67,13 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      // Show a snackbar message indicating incorrect pin
+      FirebaseAnalytics.instance.logEvent(
+        name: 'login_passcode',
+        parameters: <String, dynamic>{
+          'activity': 'Navigating to Homescreen',
+          'action': 'wrong login passcode',
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Incorrect pin code. Please try again.'),
@@ -91,6 +105,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Login Screen');
     final size = MediaQuery.of(context).size;
     return Consumer<AuthProvider>(
       builder: (BuildContext context, provider, Widget? child) {
@@ -109,13 +124,13 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(height: size.height * 0.07),
                         Theme.of(context).brightness == Brightness.light
                          ? SvgPicture.asset(
-                          'assets/padlock 2.svg',
+                          'assets/padlock 3.svg',
                           height: size.height * 0.1,
                         )
-                        : SvgPicture.asset("assets/padlock 3.svg"),
+                        : SvgPicture.asset("assets/padlock 2.svg"),
                         SizedBox(height: size.height * 0.03),
                         Text(
-                          'Enter Your Passcode',
+                          AppLocalizations.of(context)!.enterYourPasscode,
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 18,

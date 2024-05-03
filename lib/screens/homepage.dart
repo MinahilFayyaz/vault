@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -11,7 +12,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hive/hive.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vault/screens/settings/premium.dart';
 
@@ -28,7 +28,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final PersistentTabController _controller = PersistentTabController(initialIndex: 0);
   List<String> folderNames = []; // List to hold folder names
   List<File> selectedImages = [];
   List<String> selectedImagePaths = [];
@@ -98,9 +97,8 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       // Check if savedFolderNames is null or empty, if so, add default folders
       if (savedFolderNames == null || savedFolderNames.isEmpty) {
-        folderNames.addAll(['Home', 'WhatsApp']);
+        folderNames.addAll([AppLocalizations.of(context)!.home, 'Whatsapp']);
         _saveFolderNames();
-
         print('Loading folder set state names and selected image paths');// Save default folders to shared preferences
       } else {
         folderNames = savedFolderNames;
@@ -143,6 +141,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'HomeScreen');
 
     return PopScope(
       canPop: false,
@@ -163,6 +162,13 @@ class _HomePageState extends State<HomePage> {
                   => SettingsPage(
                       totalAlbums: folderNames.length, folderNames: folderNames
                   )));
+                  FirebaseAnalytics.instance.logEvent(
+                    name: 'home_settings_clicked',
+                    parameters: <String, dynamic>{
+                      'activity': 'Navigating to Settings',
+                      'action': 'Button clicked',
+                    },
+                  );
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -181,7 +187,7 @@ class _HomePageState extends State<HomePage> {
             ),
             title: Text(
                 //AppLocalizations.of(context)!.share,
-              "Locker",
+              AppLocalizations.of(context)!.locker,
               style: TextStyle(
                 //color: Colors.white,
                 fontSize: 20,
@@ -190,8 +196,16 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             actions: [
+
               GestureDetector(
                 onTap: (){
+                  FirebaseAnalytics.instance.logEvent(
+                    name: 'home_premium_clicked',
+                    parameters: <String, dynamic>{
+                      'activity': 'Navigating to Premium',
+                      'action': 'Button clicked',
+                    },
+                  );
                   Navigator.push(context, MaterialPageRoute(builder: (context)
                   => PremiumScreen()));
                 },
@@ -206,7 +220,7 @@ class _HomePageState extends State<HomePage> {
                           : Color(0xFF585956),
                       borderRadius: BorderRadius.circular(screenHeight * 0.01),
                     ),
-                    child: SvgPicture.asset('assets/premium (3).svg'),
+                    child: SvgPicture.asset('assets/premium (3).svg',),
                   ),
                 ),
               ),
@@ -224,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                     Row(
                       children: [
                         Text(
-                          'Albums',
+                          AppLocalizations.of(context)!.albums,
                           style: TextStyle(
                             fontSize: screenWidth * 0.05,
                             fontWeight: FontWeight.w400,
@@ -236,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                           width: screenWidth * 0.01,
                         ),
                         Text(
-                          '(${folderNames.length} Albums)',
+                          '(${folderNames.length} ' + AppLocalizations.of(context)!.albums +")",
                           style: TextStyle(
                             fontSize: screenWidth * 0.04,
                             color: Color(0xFF363C54),
@@ -264,6 +278,13 @@ class _HomePageState extends State<HomePage> {
                                 });
                               }
                               //_navigateToFolderContents(folderName!);
+                              FirebaseAnalytics.instance.logEvent(
+                                name: 'home_new_album_added',
+                                parameters: <String, dynamic>{
+                                  'activity': 'Navigating to new album dialogue',
+                                  'action': 'Button clicked',
+                                },
+                              );
                             },
                             child: Container(
                               height: screenHeight * 0.13,
@@ -285,6 +306,13 @@ class _HomePageState extends State<HomePage> {
                             GestureDetector(
                               onTap: (){
                                 _navigateToFolderContents(folderName);
+                                FirebaseAnalytics.instance.logEvent(
+                                  name: 'home_album_clicked',
+                                  parameters: <String, dynamic>{
+                                    'activity': 'Navigating to album',
+                                    'action': 'Album clicked',
+                                  },
+                                );
                               },
                               child: Container(
                                 height: screenHeight * 0.13,
@@ -321,7 +349,7 @@ class _HomePageState extends State<HomePage> {
                     Row(
                       children: [
                         Text(
-                          'Media',
+                          AppLocalizations.of(context)!.media,
                           style: TextStyle(
                             fontSize: screenWidth * 0.05,
                             fontWeight: FontWeight.w400,
@@ -333,7 +361,7 @@ class _HomePageState extends State<HomePage> {
                           width: screenWidth * 0.01,
                         ),
                         Text(
-                          '(${selectedImages.length} Media)',
+                          '(${selectedImages.length} ' +AppLocalizations.of(context)!.media +")",
                           style: TextStyle(
                             fontSize: screenWidth * 0.04,
                             color: Color(0xFF363C54),
@@ -362,6 +390,13 @@ class _HomePageState extends State<HomePage> {
                                   _saveFolderNames();
                                 });
                               }
+                              FirebaseAnalytics.instance.logEvent(
+                                name: 'home_image_picker_from_gallery_clicked',
+                                parameters: <String, dynamic>{
+                                  'activity': 'Navigating to Gallery',
+                                  'action': 'Add Button clicked',
+                                },
+                              );
                             },
                             child: Container(
                               height: screenHeight * 0.13,
@@ -383,6 +418,13 @@ class _HomePageState extends State<HomePage> {
                             GestureDetector(
                               onTap: () {
                                 _showImageOptionsBottomSheet(context, image);
+                                FirebaseAnalytics.instance.logEvent(
+                                  name: 'home_media_image_clicked',
+                                  parameters: <String, dynamic>{
+                                    'activity': 'Navigating to image actions',
+                                    'action': 'Image clicked',
+                                  },
+                                );
                               },
                               child: Container(
                                 height: screenHeight * 0.13,
@@ -430,8 +472,8 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Add to Album',
+                    Text(
+                      AppLocalizations.of(context)!.addToAlbum,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         //color: Colors.white,
@@ -445,7 +487,7 @@ class _HomePageState extends State<HomePage> {
                         Navigator.pop(context);
                       },
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context)!.cancel,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Theme.of(context).brightness == Brightness.light
@@ -501,8 +543,13 @@ class _HomePageState extends State<HomePage> {
                           onTap: () {
                             // Copy the image to the selected folder
                             _copyImageToFolder(image, folderName);
-                            // Navigate to the folder contents page
-                            //_navigateToFolderContents(folderName);
+                            FirebaseAnalytics.instance.logEvent(
+                              name: 'home_pselected_image_clicked',
+                              parameters: <String, dynamic>{
+                                'activity': 'image added to selected album',
+                                'action': 'Button clicked',
+                              },
+                            );
                           },
                           child: Container(
                             height: screenHeight * 0.13,
@@ -579,7 +626,7 @@ class _HomePageState extends State<HomePage> {
                   title: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
                     child: Text(
-                      'Add to Album',
+                      AppLocalizations.of(context)!.addToAlbum,
                       style: TextStyle(
                         //color: Colors.white,
                       ),
@@ -603,7 +650,7 @@ class _HomePageState extends State<HomePage> {
                   title: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
                     child: Text(
-                      'Save to Photos',
+                      AppLocalizations.of(context)!.saveToPhoto,
                       style: TextStyle(
                         //color: Colors.white,
                       ),
@@ -613,15 +660,9 @@ class _HomePageState extends State<HomePage> {
                     // Save image to photos
                     final result = await saveImageToGallery(image);
                     if (result) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Image saved to photos'),
-                        duration: Duration(seconds: 2),
-                      ));
+
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Failed to save image to photos'),
-                        duration: Duration(seconds: 2),
-                      ));
+
                     }
                     Navigator.pop(context);
                   },
@@ -639,7 +680,7 @@ class _HomePageState extends State<HomePage> {
                   title: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
                     child: Text(
-                      'Delete Media',
+                      AppLocalizations.of(context)!.deleteMedia,
                       style: TextStyle(
                         //color: Colors.white,
                       ),
@@ -681,7 +722,7 @@ class _HomePageState extends State<HomePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           //backgroundColor: Consts.FG_COLOR,
-          title: Center(child: Text('Create New Album',
+          title: Center(child: Text(AppLocalizations.of(context)!.createNewAlbum,
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700
@@ -691,7 +732,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Text('Enter a name for this album',
+              Center(child: Text(AppLocalizations.of(context)!.enterANameForThisAlbum,
                 style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey.shade700,
@@ -709,7 +750,7 @@ class _HomePageState extends State<HomePage> {
                 child: TextField(
                   controller: controller,
                   decoration: InputDecoration(
-                    hintText: 'Title',
+                    hintText: AppLocalizations.of(context)!.title,
                     border: InputBorder.none, // Remove default border
                     contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   ),
@@ -736,8 +777,8 @@ class _HomePageState extends State<HomePage> {
                       : Consts.BG_COLOR,
                 ), // Set background color
               ),
-              child: const Text(
-                'Cancel',
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
                 style: TextStyle(
                   color: Colors.grey
                 ),
@@ -758,8 +799,8 @@ class _HomePageState extends State<HomePage> {
                 minimumSize: MaterialStateProperty.all(Size(120, 40)), // Set button size
                 backgroundColor: MaterialStateProperty.all(Consts.COLOR), // Set background color
               ),
-              child: const Text(
-                'Confirm',
+              child: Text(
+                AppLocalizations.of(context)!.confirm,
                 style: TextStyle(color: Colors.white),
               ),
             ),

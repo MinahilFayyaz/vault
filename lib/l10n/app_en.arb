@@ -99,5 +99,16 @@
   "oneTimePurchase": "One Time Purchase",
   "aOneTimePurchaseToEnjoyAllThePremiumFeatures" : "A one time purchase to enjoy all the premium features",
   "withoutTheWorryOfMonthlySubscriptions" : "without the worry of monthly subscriptions",
-  "pro": "PRO"
+  "pro": "PRO",
+  "gallery": "Gallery",
+  "zip": "Zip",
+  "permissionRequired": "Permission Required",
+  "pleaseGrantPermissionToAcsessPhotos": "Please Grant Permission To Access Photos",
+  "resolution": "Resolution",
+  "thePhotoWillBeCompletelyDeleted": "The Photo wil be Completely Deleted",
+  "andCannotBeRecovered": "and can not be Recovered",
+  "value1": "1",
+  "value2": "2",
+  "value3": "3",
+  "valueContinue": "Continue"
 }

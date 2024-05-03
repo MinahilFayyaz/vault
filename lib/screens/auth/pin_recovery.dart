@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,6 +11,7 @@ import '../../provider/onboardprovider.dart';
 import '../../utils/utils.dart';
 import '../../widgets/custombutton.dart';
 import '../homepage.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PinRecoveryPage extends StatefulWidget {
   const PinRecoveryPage({Key? key}) : super(key: key);
@@ -28,6 +30,8 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Pin Recovery Screen');
+
 
     return Consumer<AuthProvider>(
       builder: (BuildContext context, provider, Widget? child) {
@@ -40,7 +44,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                   ? Color(0xFFFFFFFF) // Color for light theme
                   : Consts.FG_COLOR,
               title: Text(
-                'STEP 3/3',
+                AppLocalizations.of(context)!.step + "3/3",
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
@@ -60,7 +64,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         height: size.height * 0.02,
                       ),
                       Text(
-                        'Pin Recovery',
+                        AppLocalizations.of(context)!.pinRecovery,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
@@ -70,8 +74,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                       SizedBox(height: size.height * 0.02),
                       Center(
                         child: Text(
-                          'Simply enter your email address, and we’ll guide'
-                              'you through the process of resetting Pin Securely',
+                          AppLocalizations.of(context)!.simplyEnterYourEmailAddressAndWeWillGuide +'\n'+ AppLocalizations.of(context)!.youThroughTheProcessOfResettingPinSecurely,
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
@@ -96,7 +99,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                           return null;
                         },
                         decoration: InputDecoration(
-                          labelText: 'Enter Your Email',
+                          labelText: AppLocalizations.of(context)!.enterYourEmail,
                           filled: true,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -119,21 +122,20 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                       ),
                       CustomButton(
                         ontap: () {
-                          // Check if email controller is empty
                           if (emailController.text.isEmpty) {
-                            // Show snackbar or dialog to prompt user to enter email first
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Please enter your email first'),
+                                content: Text(AppLocalizations.of(context)!.enterYourEmail),
                               ),
                             );
                           } else {
-                            // If email is entered, store it in shared preferences
-                            // You can implement the shared preferences logic here
-                            // For demonstration purposes, I'm just printing the email
-                            print('Email entered: ${emailController.text}');
-
-                            // Navigate to the home screen
+                            FirebaseAnalytics.instance.logEvent(
+                              name: 'pin_recovery_email',
+                              parameters: <String, dynamic>{
+                                'activity': 'Navigating to HomeScreen',
+                                'action': 'Setup Button clicked',
+                              },
+                            );
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -142,13 +144,20 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                             );
                           }
                         },
-                        buttontext: 'Setup',
+                        buttontext: AppLocalizations.of(context)!.setUp,
                       ),
                       SizedBox(
                         height: size.height * 0.01,
                       ),
                       GestureDetector(
                         onTap: (){
+                          FirebaseAnalytics.instance.logEvent(
+                            name: 'pin_recovery_skip',
+                            parameters: <String, dynamic>{
+                              'activity': 'Navigating to HomeScreen',
+                              'action': 'skip Button clicked',
+                            },
+                          );
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
@@ -157,7 +166,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                           );
                         },
                         child: Text(
-                          'Skip',
+                          AppLocalizations.of(context)!.skip,
                           style: TextStyle(color: Theme.of(context).brightness == Brightness.light
                               ? Color(0xFF666666)// Color for light theme
                               : Color(0xFF999999),),

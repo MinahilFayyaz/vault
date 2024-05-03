@@ -1,8 +1,10 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:form_field_validator/form_field_validator.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../consts/consts.dart';
 import '../../provider/authprovider.dart';
 import '../../widgets/custombutton.dart';
@@ -17,6 +19,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   final passwordController = TextEditingController();
   final GlobalKey<FormState> _registerformKey = GlobalKey<FormState>();
   final passwordValidator = MultiValidator([
@@ -41,6 +44,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 final screenHeight = MediaQuery.of(context).size.height;
+    _analytics.setCurrentScreen(screenName: 'Register Passcode Screen');
 
     return Consumer<AuthProvider>(
       builder: (BuildContext context, provider, Widget? child) {
@@ -52,7 +56,7 @@ final screenHeight = MediaQuery.of(context).size.height;
                   ? Color(0xFFFFFFFF) // Color for light theme
                   : Consts.FG_COLOR,
              title:  Text(
-                'STEP 1/3',
+               AppLocalizations.of(context)!.step + "1/3",
                 style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
@@ -71,7 +75,7 @@ final screenHeight = MediaQuery.of(context).size.height;
                     children: [
                       SizedBox(height: size.height * 0.02),
                       Text(
-                        'Set a Passcode',
+                        AppLocalizations.of(context)!.setAPasscode,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
@@ -80,7 +84,7 @@ final screenHeight = MediaQuery.of(context).size.height;
                       ),
                       SizedBox(height: size.height * 0.02),
                       Text(
-                        'Ensure your Private Photo remain Confidential \n by establishing a personalized password',
+                        AppLocalizations.of(context)!.ensureYourPrivatePhotoRemainConfidential +'\n'+ AppLocalizations.of(context)!.byEstablishingAPersonalizedPassword,
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -142,8 +146,15 @@ final screenHeight = MediaQuery.of(context).size.height;
                       CustomButton(
                         ontap: () {
                           validate();
+                          FirebaseAnalytics.instance.logEvent(
+                            name: 'register_set_passcode',
+                            parameters: <String, dynamic>{
+                              'activity': 'Navigating to ConfirmPassword',
+                              'action': 'Button clicked',
+                            },
+                          );
                         },
-                        buttontext: 'Set Password',
+                        buttontext: AppLocalizations.of(context)!.setPassword,
                       ),
                       SizedBox(height: size.height * 0.02,),
                       GridView.count(
@@ -196,27 +207,6 @@ final screenHeight = MediaQuery.of(context).size.height;
                                     _removeLastDigit();
                                   },
                                 ),
-                                // child: ElevatedButton(
-                                //   onPressed: () {
-                                //     setState(() {
-                                //       pin = ''; // Clear the pin
-                                //       passwordController.clear(); // Clear password controller text
-                                //     });
-                                //   },
-                                //   style: ElevatedButton.styleFrom(
-                                //     shape: CircleBorder(),
-                                //     // Adjust color as needed
-                                //   ),
-                                //   child: Theme.of(context).brightness == Brightness.light
-                                //       ? ColorFiltered(
-                                //     colorFilter: ColorFilter.mode(
-                                //       Colors.black,
-                                //       BlendMode.srcIn,
-                                //     ),
-                                //     child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
-                                //   )
-                                //       : SvgPicture.asset('assets/Vector.svg'),
-                                // ),
                               );
                             } else {
                               // Add numeric buttons from 1 to 9
@@ -247,12 +237,7 @@ final screenHeight = MediaQuery.of(context).size.height;
                           },
                         ),
                       ),
-
                       SizedBox(height: size.height * 0.02),
-                      // Text(
-                      //   'Entered Pin: $pin',
-                      //   style: TextStyle(fontSize: 18),
-                      // ),
                     ],
                   ),
                 ),

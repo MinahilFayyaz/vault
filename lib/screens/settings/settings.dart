@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,6 +15,7 @@ import 'package:vault/screens/homepage.dart';
 import 'package:vault/screens/languages.dart';
 import 'package:vault/screens/settings/app_icons.dart';
 import 'package:vault/screens/settings/premium.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../consts/consts.dart';
 import '../../provider/themeprovider.dart';
@@ -76,76 +78,6 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
-  // Future<void> _exportAllImages(BuildContext context) async {
-  //   try {
-  //     // Calculate total number of images to export
-  //     int totalImages = 0;
-  //     for (final folderName in folderNames) {
-  //       final Box box = await Hive.openBox(folderName);
-  //       totalImages += box.length;
-  //       await box.close();
-  //     }
-  //
-  //     // Show progress dialog
-  //     showDialog(
-  //       context: context,
-  //       barrierDismissible: false,
-  //       builder: (context) => ProgressDialog(
-  //         message: 'Exporting files...',
-  //         progress: exportedImages / totalImages,
-  //       ),
-  //     );
-  //
-  //     // Initialize variables to track progress
-  //     int exportedImages = 0;
-  //
-  //     // Iterate over each folder name
-  //     for (final folderName in folderNames) {
-  //       // Open the Hive box for the current folder
-  //       final Box box = await Hive.openBox(folderName);
-  //
-  //       // Get the keys (image names) from the box
-  //       final List<dynamic> keys = box.keys.toList();
-  //
-  //       // Iterate over the keys (image names)
-  //       for (final key in keys) {
-  //         // Get the image data from the box
-  //         final Uint8List imageData = box.get(key) as Uint8List;
-  //         // Save the image to the gallery
-  //         await _saveImageToGallery(context, imageData, key.toString());
-  //
-  //         // Update progress
-  //         exportedImages++;
-  //         // Update progress dialog
-  //         Navigator.of(context).pop(); // Close previous dialog
-  //         showDialog(
-  //           context: context,
-  //           barrierDismissible: false,
-  //           builder: (context) => ProgressDialog(
-  //             progress: exportedImages / totalImages,
-  //             message: 'Exporting files...',
-  //           ),
-  //         );
-  //       }
-  //
-  //       // Close the box after processing all images in the folder
-  //       await box.close();
-  //     }
-  //
-  //     // Hide the progress dialog and show a success message
-  //     Navigator.of(context).pop(); // Hide the progress dialog
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('All files exported successfully!')),
-  //     );
-  //   } catch (error) {
-  //     // Hide the progress dialog and show an error message
-  //     Navigator.of(context).pop(); // Hide the progress dialog
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Failed to export files: $error')),
-  //     );
-  //   }
-  // }
-
   Future<void> _exportAllImages(BuildContext context) async {
     try {
       // Calculate total number of images to export
@@ -203,7 +135,7 @@ class SettingsPage extends StatelessWidget {
             barrierDismissible: false,
             builder: (context) => ProgressDialog(
               progress: progress,
-              message: 'Exporting files...',
+              message: AppLocalizations.of(context)!.exportingFiles + "....",
             ),
           );
         }
@@ -213,237 +145,29 @@ class SettingsPage extends StatelessWidget {
       }
 
       // Hide the progress dialog and show a success message
-      Navigator.of(context).pop(); // Hide the progress dialog
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('All files exported successfully!')),
-      );
+      Navigator.of(context).pop();
+      FirebaseAnalytics.instance.logEvent(
+        name: 'settings_exported_all_images',
+        parameters: <String, dynamic>{
+          'activity': 'Navigating to Settings',
+          'action': 'exported all images to gallery',
+        },
+      );// Hide the progress dialog
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('All files exported successfully!')),
+      // );
     } catch (error) {
       // Hide the progress dialog and show an error message
-      Navigator.of(context).pop(); // Hide the progress dialog
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to export files: $error')),
+      Navigator.of(context).pop();
+      FirebaseAnalytics.instance.logEvent(
+        name: 'settings_exported_all_images',
+        parameters: <String, dynamic>{
+          'activity': 'Navigating to Settings',
+          'action': 'exported failed to save images to gallery',
+        },
       );
     }
   }
-
-  // Future<void> _exportAllFiles(BuildContext context) async {
-  // Future<void> _exportAllFiles(BuildContext context) async {
-  //   // Open the Hive box for each folder
-  //   final List<String> folderNames = await Hive.box('Home').keys.cast<String>().toList();
-  //
-  //   // Get the path to the temporary directory
-  //   final Directory directory = await getTemporaryDirectory();
-  //
-  //   // Define the path to the zip file
-  //   final String zipFilePath = '${directory.path}/exported_files.zip';
-  //
-  //   // Create a zip file
-  //   final File zipFile = File(zipFilePath);
-  //   final ZipFileEncoder zipEncoder = ZipFileEncoder();
-  //   zipEncoder.create(zipFilePath); // Start the zip creation
-  //
-  //   int currentFileIndex = 0;
-  //   final int totalFiles = folderNames.length;
-  //
-  //   // Show progress dialog
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) => ProgressDialog(
-  //       progress: currentFileIndex / totalFiles,
-  //       message: 'Exporting files...',
-  //     ),
-  //   );
-  //
-  //   // Iterate over each folder and export its contents
-  //   for (final String folderName in folderNames) {
-  //     final Box box = await Hive.openBox(folderName);
-  //     final List<dynamic> keys = box.keys.toList();
-  //
-  //     // Iterate over the files in the folder
-  //     for (final dynamic key in keys) {
-  //       final Uint8List imageData = box.get(key) as Uint8List;
-  //       final String imageName = key.toString();
-  //       final String tempFilePath = '${directory.path}/$imageName';
-  //
-  //       // Write image data to temporary file
-  //       final File tempFile = File(tempFilePath);
-  //       await tempFile.writeAsBytes(imageData);
-  //
-  //       // Add the temporary file to the zip file
-  //       zipEncoder.addFile(tempFile, '$folderName/$imageName');
-  //
-  //       currentFileIndex++;
-  //     }
-  //     // Close the box for the current folder
-  //     await box.close();
-  //   }
-  //
-  //   // Close the zip file
-  //   zipEncoder.close();
-  //
-  //   // Notify the user that the zip file has been saved
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text('Files exported to: $zipFilePath')),
-  //   );
-  // }
-
-  // Future<void> _exportAllFiles(BuildContext context) async {
-  //   try {
-  //     // Get the path to the temporary directory
-  //     final Directory directory = await getTemporaryDirectory();
-  //
-  //     // Define the path to the zip file
-  //     final String zipFilePath = '${directory.path}/exported_files.zip';
-  //
-  //     // Create a zip file
-  //     final File zipFile = File(zipFilePath);
-  //     final ZipFileEncoder zipEncoder = ZipFileEncoder();
-  //     zipEncoder.create(zipFilePath); // Start the zip creation
-  //
-  //     // Iterate over each folder and export its contents
-  //     for (final String folderName in folderNames) {
-  //       final Box box = await Hive.openBox(folderName);
-  //       final List<dynamic> keys = box.keys.toList();
-  //
-  //       // Iterate over the files in the folder
-  //       for (final dynamic key in keys) {
-  //         final Uint8List imageData = box.get(key) as Uint8List;
-  //         final String imageName = key.toString();
-  //         final String tempFolderPath = '${directory.path}/$folderName';
-  //         final String tempFilePath = '$tempFolderPath/$imageName';
-  //
-  //         // Create the temporary folder if it doesn't exist
-  //         await Directory(tempFolderPath).create(recursive: true);
-  //
-  //         // Write image data to temporary file
-  //         final File tempFile = File(tempFilePath);
-  //         await tempFile.writeAsBytes(imageData);
-  //
-  //         // Add the temporary file to the zip file
-  //         zipEncoder.addFile(tempFile, '$folderName/$imageName');
-  //       }
-  //
-  //       // Close the box for the current folder
-  //       await box.close();
-  //     }
-  //
-  //     // Close the zip file
-  //     zipEncoder.close();
-  //
-  //     print('Zip file created successfully at: $zipFilePath');
-  //     Share.shareFiles([zipFilePath], text: 'Exported files');
-  //   } catch (error) {
-  //     print('Failed to create zip file: $error');
-  //   }
-  // }
-
-  // Future<void> _exportAllFiles(BuildContext context) async {
-  //   try {
-  //     // Get the path to the temporary directory
-  //     final Directory directory = await getTemporaryDirectory();
-  //
-  //     // Define the path to the zip file
-  //     final String zipFilePath = '${directory.path}/exported_files.zip';
-  //
-  //     // Create a zip file
-  //     final File zipFile = File(zipFilePath);
-  //     final ZipFileEncoder zipEncoder = ZipFileEncoder();
-  //     zipEncoder.create(zipFilePath); // Start the zip creation
-  //
-  //     // Initialize variables to track progress
-  //     int exportedImages = 0;
-  //
-  //     showDialog(
-  //       context: context,
-  //       barrierDismissible: false,
-  //       builder: (context) => ProgressDialog(
-  //         progress: 0, // Start with 0 progress
-  //         message: 'Exporting files...',
-  //       ),
-  //     );
-  //
-  //     // Calculate total number of images to export
-  //     int totalImages = 0;
-  //     for (final folderName in folderNames) {
-  //       final Box box = await Hive.openBox(folderName);
-  //       totalImages += box.length;
-  //       await box.close();
-  //     }
-  //
-  //     // Show progress dialog
-  //     showDialog(
-  //       context: context,
-  //       barrierDismissible: false,
-  //       builder: (context) => ProgressDialog(
-  //         progress: 0, // Start with 0 progress
-  //         message: 'Exporting files...',
-  //       ),
-  //     );
-  //
-  //     // Iterate over each folder and export its contents
-  //     for (final String folderName in folderNames) {
-  //       final Box box = await Hive.openBox(folderName);
-  //       final List<dynamic> keys = box.keys.toList();
-  //
-  //       // Iterate over the files in the folder
-  //       for (final dynamic key in keys) {
-  //         final Uint8List imageData = box.get(key) as Uint8List;
-  //         final String imageName = key.toString();
-  //         final String tempFolderPath = '${directory.path}/$folderName';
-  //         final String tempFilePath = '$tempFolderPath/$imageName';
-  //
-  //         // Create the temporary folder if it doesn't exist
-  //         await Directory(tempFolderPath).create(recursive: true);
-  //
-  //         // Write image data to temporary file
-  //         final File tempFile = File(tempFilePath);
-  //         await tempFile.writeAsBytes(imageData);
-  //
-  //         // Add the temporary file to the zip file
-  //         zipEncoder.addFile(tempFile, '$folderName/$imageName');
-  //
-  //         // Update progress
-  //         exportedImages++;
-  //         double progress = totalImages == 0 ? 0 : exportedImages / totalImages;
-  //
-  //         // Update progress dialog
-  //         showDialog(
-  //           context: context,
-  //           barrierDismissible: false,
-  //           builder: (context) => ProgressDialog(
-  //             progress: progress,
-  //             message: 'Exporting files...',
-  //           ),
-  //         );
-  //       }
-  //
-  //       // Close the box for the current folder
-  //       await box.close();
-  //     }
-  //
-  //     // Close the zip file
-  //     zipEncoder.close();
-  //
-  //     // Hide the progress dialog
-  //     Navigator.of(context).pop();
-  //
-  //     // Notify the user that the zip file has been saved
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Files exported to: $zipFilePath')),
-  //     );
-  //
-  //     // Share the zip file
-  //     Share.shareFiles([zipFilePath], text: 'Exported files');
-  //   } catch (error) {
-  //     // Hide the progress dialog and show an error message
-  //     Navigator.of(context).pop();
-  //     print('Failed to export files: $error');
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Failed to export files: $error')),
-  //     );
-  //   }
-  // }
 
   Future<void> _exportAllFiles(BuildContext context) async {
     try {
@@ -475,7 +199,7 @@ class SettingsPage extends StatelessWidget {
         barrierDismissible: false,
         builder: (context) => ProgressDialog(
           progress: 0, // Start with 0 progress
-          message: 'Exporting files...',
+          message: AppLocalizations.of(context)!.exportingFiles + "....",
         ),
       );
 
@@ -525,7 +249,7 @@ class SettingsPage extends StatelessWidget {
             barrierDismissible: false,
             builder: (context) => ProgressDialog(
               progress: progress,
-              message: 'Exporting files...',
+              message: AppLocalizations.of(context)!.exportingFiles + "....",
             ),
           );
         }
@@ -543,25 +267,37 @@ class SettingsPage extends StatelessWidget {
       print('MK: exportedImages...:0 $exportedImages');
       if (exportedImages > 0) {
         // Notify the user that the zip file has been saved
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Files exported to: $zipFilePath')),
+        FirebaseAnalytics.instance.logEvent(
+          name: 'settings_exported_all_images_in_zip',
+          parameters: <String, dynamic>{
+            'activity': 'Navigating to Settings',
+            'action': 'exported all files to zip',
+          },
         );
 
         final XFile xFile = XFile(zipFilePath);
-        await Share.shareXFiles([xFile], subject: 'Exported files');
+        await Share.shareXFiles([xFile], subject: AppLocalizations.of(context)!.exportFiles);
         // Share the zip file
         //Share.shareFiles([zipFilePath], text: 'Exported files');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No files to export')),
+        FirebaseAnalytics.instance.logEvent(
+          name: 'settings_exported_all_files',
+          parameters: <String, dynamic>{
+            'activity': 'Navigating to Settings',
+            'action': 'exported failed to form zip',
+          },
         );
       }
     } catch (error) {
       // Hide the progress dialog and show an error message
       Navigator.of(context).pop();
       print('Failed to export files: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to export files: $error')),
+      FirebaseAnalytics.instance.logEvent(
+        name: 'settings_exported_all_files',
+        parameters: <String, dynamic>{
+          'activity': 'Navigating to Settings',
+          'action': 'exported failed to form zip',
+        },
       );
     }
   }
@@ -569,7 +305,8 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    print('albums $totalAlbums $folderNames');
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Setting Screen');
+
     return WillPopScope(
       onWillPop: () async {
         Navigator.pushReplacement(
@@ -590,8 +327,8 @@ class SettingsPage extends StatelessWidget {
                 ? Color(0xFFFFFFFF) // Color for light theme
                 : Consts.FG_COLOR,
             centerTitle: true,
-            title: const Text(
-              'Setting',
+            title: Text(
+              AppLocalizations.of(context)!.setting,
               style: TextStyle(
                 //color: Colors.white,
                 fontSize: 18,
@@ -619,7 +356,7 @@ class SettingsPage extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Text(
-                        'Settings',
+                        AppLocalizations.of(context)!.settings,
                         style: TextStyle(
                           //color: Colors.white,
                           fontSize: 16,
@@ -631,9 +368,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Language',
+                    tiletitle: AppLocalizations.of(context)!.languages,
                     iconData: 'assets/settings/fi_8933942.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_languages',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to LanguagesScreen',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -647,9 +391,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'App Icon',
+                    tiletitle: AppLocalizations.of(context)!.appIcon,
                     iconData: 'assets/settings/app-store (1) 1.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_app_icon',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to AppIconScreen',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -663,15 +414,22 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Export all Files',
+                    tiletitle: AppLocalizations.of(context)!.exportAllFiles,
                     iconData: 'assets/settings/download (1) 2.svg',
                     onTap: () async {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_export_all_files',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to ExportAllDialogue',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       final userChoice = await showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
                           title: Center(child: Text('Export Files')),
                           content: Text(
-                              'Would you like to save the images to the gallery or download them as a zip file?'),
+                              AppLocalizations.of(context)!.wouldYouLikeToSaveTheImagesToTheGalleryOrDownloadThemAsAZipFile + "?"),
                           actions: [
                             Row(
                                 mainAxisAlignment:
@@ -698,7 +456,7 @@ class SettingsPage extends StatelessWidget {
                                           .COLOR), // Set background color
                                     ),
                                     child: Text(
-                                      'Save to Gallery',
+                                      AppLocalizations.of(context)!.saveToGallery,
                                       style: TextStyle(color: Colors.white),
                                     ),
                                   ),
@@ -723,7 +481,7 @@ class SettingsPage extends StatelessWidget {
                                           .COLOR), // Set background color
                                     ),
                                     child: Text(
-                                      'Download Zip',
+                                      AppLocalizations.of(context)!.downloadZip,
                                       style: TextStyle(color: Colors.white),
                                     ),
                                   ),
@@ -731,51 +489,23 @@ class SettingsPage extends StatelessWidget {
                           ],
                         ),
                       );
-
-                      // if (userChoice == 'gallery') {
-                      //        String folderName =
-                      //            "yourfolder"; // Specify the folder name
-                      //        final box = await Hive.openBox(folderName);
-                      //        final List<dynamic> keys = box.keys.toList();
-                      //
-                      //        bool allFilesSaved = true;
-                      //        List<String> failedFiles = [];
-                      //
-                      //        for (var key in keys) {
-                      //          final Uint8List imageData = box.get(key) as Uint8List;
-                      //          final String imageName = key.toString();
-                      //
-                      //          // Attempt to save the image and check the result
-                      //          final result = await _saveImageToGallery(
-                      //              context, imageData, imageName);
-                      //
-                      //          if (!result) {
-                      //            // Check for failed save operations
-                      //            allFilesSaved = false;
-                      //            failedFiles.add(imageName);
-                      //          }
-                      //        }
-                      //
-                      //
-                      //        // Display the appropriate snack bar message based on whether all files were saved
-                      //        if (allFilesSaved) {
-                      //          ScaffoldMessenger.of(context).showSnackBar(
-                      //            SnackBar(
-                      //                content:
-                      //                    Text('All files exported successfully!')),
-                      //          );
-                      //        } else {
-                      //          ScaffoldMessenger.of(context).showSnackBar(
-                      //            SnackBar(
-                      //                content: Text(
-                      //                    'Some files failed to export: ${failedFiles.join(", ")}')),
-                      //          );
-                      //        }
-                      //      }
                       if (userChoice == 'gallery') {
+                        FirebaseAnalytics.instance.logEvent(
+                          name: 'settings_export_gallery',
+                          parameters: <String, dynamic>{
+                            'activity': 'exporting all images to gallery',
+                            'action': 'Button Clicked',
+                          },
+                        );
                         await _exportAllImages(context);
                       } else if (userChoice == 'zip') {
-                        // Download zip file
+                        FirebaseAnalytics.instance.logEvent(
+                          name: 'settings_export_zip',
+                          parameters: <String, dynamic>{
+                            'activity': 'exporting all images to zip',
+                            'action': 'Button Clicked',
+                          },
+                        );
                         await _exportAllFiles(context);
                       }
                     },
@@ -785,15 +515,22 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Security',
+                    tiletitle: AppLocalizations.of(context)!.security,
                     iconData: 'assets/settings/shield 1.svg',
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ChangePasswordPage(),
-                        ),
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_security',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to SEcurityScreen',
+                          'action': 'Button Clicked',
+                        },
                       );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const ChangePasswordPage(),
+                      //   ),
+                      // );
                     },
                   ),
                   SizedBox(
@@ -801,9 +538,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Theme',
+                    tiletitle: AppLocalizations.of(context)!.theme,
                     iconData: 'assets/settings/theme 1.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_theme',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to ThemeDialogue',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Utils(context).showCustomDialog(
                         child: _themetileWidget(
                           context: context,
@@ -818,7 +562,7 @@ class SettingsPage extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Text(
-                        'Membership',
+                        AppLocalizations.of(context)!.membership,
                         style: TextStyle(
                           //color: Colors.white,
                           fontSize: 16,
@@ -830,9 +574,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Restore Purchase',
+                    tiletitle:AppLocalizations.of(context)!.restorePurchase,
                     iconData: 'assets/settings/rotate 1.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_restore_purchase',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to PREMIUMscreen',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -848,7 +599,7 @@ class SettingsPage extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Text(
-                        'Others',
+                        AppLocalizations.of(context)!.others,
                         style: TextStyle(
                           //color: Colors.white,
                           fontSize: 16,
@@ -863,9 +614,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Share this app',
+                    tiletitle: AppLocalizations.of(context)!.shareThisApp,
                     iconData: 'assets/settings/share (1) 1.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_share_app',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to shareapp',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -879,9 +637,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Privacy Policy',
+                    tiletitle: AppLocalizations.of(context)!.privacyPolicy,
                     iconData: 'assets/settings/padlock 3.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_privacy_policy',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to Privacy policy',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -895,9 +660,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Rate our app',
+                    tiletitle: AppLocalizations.of(context)!.rateOurApp,
                     iconData: 'assets/settings/star 1.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_rate_app',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to Rate Our App',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -911,9 +683,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'App Version',
+                    tiletitle: AppLocalizations.of(context)!.appVersion,
                     iconData: 'assets/settings/version 1.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_app_version',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to AppVersion',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -927,9 +706,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   _buildListtile(
                     context: context,
-                    tiletitle: 'Contact Us',
+                    tiletitle: AppLocalizations.of(context)!.contactUs,
                     iconData: 'assets/settings/email 1.svg',
                     onTap: () {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'settings_contact_us',
+                        parameters: <String, dynamic>{
+                          'activity': 'Navigating to contact us',
+                          'action': 'Button Clicked',
+                        },
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -982,8 +768,8 @@ class SettingsPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Select Theme',
+             Text(
+              AppLocalizations.of(context)!.selectTheme,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
               ),
@@ -995,7 +781,7 @@ class SettingsPage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SelectionButtonWidget(
-                  buttontitle: 'System Theme',
+                  buttontitle: AppLocalizations.of(context)!.systemTheme,
                   iconCondition: provider.themeMode == ThemeMode.system,
                   ontap: () {
                     provider.themeMode = ThemeMode.system;
@@ -1006,7 +792,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 SelectionButtonWidget(
                   iconCondition: provider.themeMode == ThemeMode.light,
-                  buttontitle: 'Light Theme',
+                  buttontitle: AppLocalizations.of(context)!.lightTheme,
                   ontap: () {
                     provider.themeMode = ThemeMode.light;
                   },
@@ -1016,7 +802,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 SelectionButtonWidget(
                   iconCondition: provider.themeMode == ThemeMode.dark,
-                  buttontitle: 'Dark Theme',
+                  buttontitle: AppLocalizations.of(context)!.darkTheme,
                   ontap: () {
                     provider.themeMode = ThemeMode.dark;
                   },
@@ -1065,7 +851,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                   height: 2,
                 ),
                 Text(
-                  'Exported Successfully!',
+                  AppLocalizations.of(context)!.exportedSuccessfully + "!",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1106,14 +892,6 @@ class _ProgressDialogState extends State<ProgressDialog> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => SettingsPage( totalAlbums: , // Pass the actual value received in the settings screen
-        //       folderNames: folderNames, ),
-        //   ),
-        // );
-        // Prevent default back button behavior
         return false;
       },
       child: AlertDialog(

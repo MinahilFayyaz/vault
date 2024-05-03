@@ -2,6 +2,7 @@
 
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../consts/consts.dart';
 import '../permission.dart';
 import 'gallery.dart';
@@ -69,7 +71,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     return thumbnailPath;
   }
 
-  // Method to save an image file to Hive
   Future<void> saveImageToHive(File imageFile, String folderName) async {
     // Open the Hive box for the specified folder
     final box = await Hive.openBox(folderName);
@@ -84,7 +85,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     await box.put(key, imageBytes);
   }
 
-// Method to delete media (both images and videos) from Hive
   Future<void> deleteMediaFromHive(String mediaPath) async {
     // Open the Hive box for the specified folder
     final box = await Hive.openBox(widget.folderName!);
@@ -93,7 +93,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
     await box.delete(mediaPath);
   }
 
-// Method to handle adding a new image
   Future<void> addNewImage(File newImage, String folderName) async {
     // Save the new image to Hive
     await saveImageToHive(newImage, folderName);
@@ -280,6 +279,7 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Albums Screen');
 
     return Scaffold(
       appBar: PreferredSize(
@@ -299,6 +299,13 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
           actions: [
             GestureDetector(
               onTap: () async {
+                FirebaseAnalytics.instance.logEvent(
+                  name: 'album_add_from_gallery',
+                  parameters: <String, dynamic>{
+                    'activity': 'Navigating to Gallery',
+                    'action': 'Button Clicked',
+                  },
+                );
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
                 if (isFirstLaunch) {
@@ -347,8 +354,6 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting || _mediaData == null) {
             int shimmerCount = snapshot.data != null ? snapshot.data!.length : 0;
-            print('media data : $_mediaData');
-            print('snapshot data : ${snapshot.data?.length}');
             return Shimmer.fromColors(
               baseColor: Colors.grey[300]!,
               highlightColor: Colors.grey[100]!,
@@ -378,16 +383,16 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                   children: [
                     SvgPicture.asset('assets/folder (2) 1.svg'),
                     const SizedBox(height: 16),
-                    const Text(
-                      'No File Found',
-                      style: TextStyle(
+                   Text(
+                      AppLocalizations.of(context)!.noFileFound,
+                     style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'There is no file in the album yet!',
+                    Text(
+                      AppLocalizations.of(context)!.thereIsNoFileInTheAlbumYet,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
@@ -410,6 +415,13 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                   if (media is File) {
                     return GestureDetector(
                       onTap: () {
+                        FirebaseAnalytics.instance.logEvent(
+                          name: 'album_media',
+                          parameters: <String, dynamic>{
+                            'activity': 'Navigating to PreviewScreen',
+                            'action': 'Media Clicked',
+                          },
+                        );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -524,16 +536,16 @@ class _FolderContentsPageState extends State<FolderContentsPage> {
                 children: [
                   SvgPicture.asset('assets/folder (2) 1.svg'),
                   const SizedBox(height: 16),
-                  const Text(
-                    'No File Found',
+                  Text(
+                    AppLocalizations.of(context)!.noFileFound,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'There is no file in the album yet!',
+                Text(
+                  AppLocalizations.of(context)!.thereIsNoFileInTheAlbumYet,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,

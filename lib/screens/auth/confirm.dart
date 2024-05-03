@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:form_field_validator/form_field_validator.dart';
@@ -9,6 +10,7 @@ import '../../provider/authprovider.dart';
 import '../../provider/onboardprovider.dart';
 import '../../widgets/custombutton.dart';
 import '../homepage.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ConfirmPasswordPage extends StatefulWidget {
   final String password;
@@ -47,24 +49,26 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Confirm Passcode Screen');
 
     return Consumer<AuthProvider>(
       builder: (BuildContext context, provider, Widget? child) {
         return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).brightness == Brightness.light
-                ? Color(0xFFFFFFFF) // Color for light theme
-                : Consts.FG_COLOR,
-            title:  Text(
-              'STEP 2/3',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  //color: Colors.white
-              ),
-            ),
-          ),
-          body: SingleChildScrollView(
+            appBar: AppBar(
+                backgroundColor: Theme.of(context).brightness == Brightness.light
+                    ? Color(0xFFFFFFFF) // Color for light theme
+                    : Consts.FG_COLOR,
+                title: Text(
+       AppLocalizations.of(context)!.step + "2/3",
+        style: TextStyle(
+        fontWeight: FontWeight.w700,
+        fontSize: 18,
+        //color: Colors.white
+        ),
+        ),
+        ),
+
+        body: SingleChildScrollView(
             child: SafeArea(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.07),
@@ -76,7 +80,7 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                         height: size.height * 0.02,
                       ),
                       Text(
-                        'Confirm Passcode',
+                        AppLocalizations.of(context)!.confirmPasscode,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
@@ -85,7 +89,7 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                       ),
                       SizedBox(height: size.height * 0.02),
                       Text(
-                        'Ensure your Private Photo remain Confidential \n by establishing a personalized password',
+                        AppLocalizations.of(context)!.ensureYourPrivatePhotoRemainConfidential +'\n'+ AppLocalizations.of(context)!.byEstablishingAPersonalizedPassword,
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -150,8 +154,15 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                       CustomButton(
                         ontap: () {
                           validate();
+                          FirebaseAnalytics.instance.logEvent(
+                            name: 'confirm_confirm_passcode',
+                            parameters: <String, dynamic>{
+                              'activity': 'Navigating to PinRecovery',
+                              'action': 'Button clicked',
+                            },
+                          );
                         },
-                        buttontext: 'Confirm Password',
+                        buttontext: AppLocalizations.of(context)!.confirmPassword,
                       ),
                       SizedBox(height: size.height * 0.02,),
                       GridView.count(
@@ -202,27 +213,6 @@ class _ConfirmPasswordPageState extends State<ConfirmPasswordPage> {
                                     _removeLastDigit();
                                   },
                                 ),
-                                // child: ElevatedButton(
-                                //   onPressed: () {
-                                //     setState(() {
-                                //       pin = ''; // Clear the pin
-                                //       confirmpasswordController.clear(); // Clear password controller text
-                                //     });
-                                //   },
-                                //   style: ElevatedButton.styleFrom(
-                                //     shape: CircleBorder(),
-                                //     // Adjust color as needed
-                                //   ),
-                                //   child: Theme.of(context).brightness == Brightness.light
-                                //       ? ColorFiltered(
-                                //     colorFilter: ColorFilter.mode(
-                                //       Colors.black,
-                                //       BlendMode.srcIn,
-                                //     ),
-                                //     child: SvgPicture.asset('assets/Vector.svg'), // Color for light theme
-                                //   )
-                                //       : SvgPicture.asset('assets/Vector.svg'),
-                                // ),
                               );
                             } else {
                               // Add numeric buttons from 1 to 9

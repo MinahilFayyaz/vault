@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -7,12 +8,14 @@ import '../../consts/consts.dart';
 import '../../permission.dart';
 import '../../widgets/custombutton.dart';
 import '../../widgets/custombuttontransparent.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PremiumScreen extends StatelessWidget {
   const PremiumScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Premium Screen');
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -46,7 +49,7 @@ class PremiumScreen extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 290.0, right: 100),
+                    padding: const EdgeInsets.only(top: 290.0),
                     child: Align(
                       alignment: Alignment.bottomLeft, // Align to the bottom center of the image
                       child: Container(
@@ -58,6 +61,7 @@ class PremiumScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Gallery Vault PRO',
+                              textAlign: TextAlign.start,
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
@@ -66,7 +70,9 @@ class PremiumScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 8), // Optional spacing between title and subtitle
                             Text(
-                              'Gallery Vault Pro offers premium features to loud up the sound. Join now and enjoy all premium features.',
+                             AppLocalizations.of(context)!.galleryVault + AppLocalizations.of(context)!.pro+
+                                  AppLocalizations.of(context)!.offersPremiumFeaturesToLoudUpTheSound +"\n"+
+                                  AppLocalizations.of(context)!.joinNowAndEnjoyAllPremiumFeatures,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -106,7 +112,7 @@ class PremiumScreen extends StatelessWidget {
                           SvgPicture.asset('assets/Frame.svg'),
                           SizedBox(width: size.width * 0.05),
                           Text(
-                            '100% ADs Free',
+                            "100% "+AppLocalizations.of(context)!.adsFree,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,
@@ -129,7 +135,7 @@ class PremiumScreen extends StatelessWidget {
                           SvgPicture.asset('assets/Frame.svg'),
                           SizedBox(width: size.width * 0.05),
                           Text(
-                            'Upload Unlimited Photo And Videos',
+                            AppLocalizations.of(context)!.uploadUnlimitedPhotoAndVideos,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,
@@ -153,7 +159,7 @@ class PremiumScreen extends StatelessWidget {
                           SvgPicture.asset('assets/Frame.svg'),
                           SizedBox(width: size.width * 0.05),
                           Text(
-                            'Premium Support',
+                            AppLocalizations.of(context)!.premiumSupport,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,
@@ -174,7 +180,13 @@ class PremiumScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.03),
                 child: GestureDetector(
                   onTap: () {
-                    // Handle button tap
+                    FirebaseAnalytics.instance.logEvent(
+                      name: 'premium_purchase',
+                      parameters: <String, dynamic>{
+                        'activity': 'Continuing with one time purchase',
+                        'action': 'Button Clicked',
+                      },
+                    );
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.90, // Use MediaQuery for width
@@ -194,7 +206,7 @@ class PremiumScreen extends StatelessWidget {
                           SvgPicture.asset('assets/Frame-2.svg'),
                           SizedBox(width: MediaQuery.of(context).size.width * 0.04,),
                           Text(
-                            'One time purchase/ Rs1500.00',
+                            AppLocalizations.of(context)!.oneTimePurchase + ' / Rs1500.00',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -210,7 +222,7 @@ class PremiumScreen extends StatelessWidget {
 
               SizedBox(height: size.height * 0.027,),
               Text(
-                'A one time purchase to enjoy all the premium features without the worry of monthly subscriptions',
+                AppLocalizations.of(context)!.aOneTimePurchaseToEnjoyAllThePremiumFeatures +"\n"+AppLocalizations.of(context)!.withoutTheWorryOfMonthlySubscriptions,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.699999988079071),
@@ -223,7 +235,13 @@ class PremiumScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.03),
                 child: GestureDetector(
                   onTap: () {
-                    // Handle button tap
+                    FirebaseAnalytics.instance.logEvent(
+                      name: 'premium_continue_without_ads',
+                      parameters: <String, dynamic>{
+                        'activity': 'Continuing without ads',
+                        'action': 'Button Clicked',
+                      },
+                    );
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.90, // Use MediaQuery for width
@@ -260,14 +278,20 @@ class PremiumScreen extends StatelessWidget {
               SizedBox(height: size.height * 0.02,),
               GestureDetector(
                 onTap: (){
-
+                  FirebaseAnalytics.instance.logEvent(
+                    name: 'premium_continue_with_ads',
+                    parameters: <String, dynamic>{
+                      'activity': 'Continuing with ads',
+                      'action': 'Button Clicked',
+                    },
+                  );
                 },
                 child: Padding(padding: EdgeInsets.symmetric(
                   horizontal: size.width * 0.05
                 ),
                   child: Center(
                     child: Text(
-                      'Continue with Ads',
+                      AppLocalizations.of(context)!.continueWithAds,
                       style: TextStyle(
                         color: Colors.white,
                           fontSize: 14,

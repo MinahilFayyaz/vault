@@ -1,7 +1,9 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dynamic_icon/flutter_dynamic_icon.dart';
 import '../../consts/consts.dart';
 import '../../widgets/custombutton.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AppIcons extends StatefulWidget {
   const AppIcons({Key? key}) : super(key: key);
@@ -26,13 +28,15 @@ class _AppIconsState extends State<AppIcons> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'App Icons Screen');
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.light
             ? Color(0xFFFFFFFF)
             : Consts.FG_COLOR,
         title: Text(
-          'App Icon',
+          AppLocalizations.of(context)!.appIcon,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w400,
@@ -46,7 +50,7 @@ class _AppIconsState extends State<AppIcons> {
           children: [
             Center(
               child: Text(
-                'Try a new look for the app to reflect the types\nof Photos you are storing',
+                AppLocalizations.of(context)!.tryANewLookForTheAppToReflectTheTypesOfPhotosYouAreStoring,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -83,7 +87,7 @@ class _AppIconsState extends State<AppIcons> {
               padding: const EdgeInsets.only(bottom: 47.0),
               child: CustomButton(
                 ontap: () => changeAppIcon(),
-                buttontext: 'Apply',
+                buttontext: AppLocalizations.of(context)!.apply,
               ),
             ),
           ],
@@ -117,6 +121,13 @@ class _AppIconsState extends State<AppIcons> {
       if (await FlutterDynamicIcon.supportsAlternateIcons) {
         await FlutterDynamicIcon.setAlternateIconName(iconNames[selectedIconIndex]);
         debugPrint("App icon change successful");
+        FirebaseAnalytics.instance.logEvent(
+          name: 'appicon_apply',
+          parameters: <String, dynamic>{
+            'activity': 'Apps Icon changed',
+            'action': 'Button clicked',
+          },
+        );
       }
     } catch (e) {
       debugPrint("Exception: ${e.toString()}");

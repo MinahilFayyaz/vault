@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -50,7 +51,7 @@ class SplashScreen extends StatelessWidget {
                             height: size.height * 0.05,
                           ),
                           Text(
-                            'Gallery Vault',
+                            AppLocalizations.of(context)!.galleryVault,
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
@@ -74,6 +75,12 @@ class SplashScreen extends StatelessWidget {
                           ),
                           CustomButton(
                             ontap: () {
+                              FirebaseAnalytics.instance.logEvent(
+                                      name: 'SplashScreen_get_started',
+                                      parameters: <String, dynamic>{
+                                        'activity': 'Navigating to Onboarding/Login',
+                                      },
+                                    );
                               final onBoardingProvider = Provider.of<OnBoardingProvider>(context, listen: false);
                               onBoardingProvider.checkOnBoardingStatus();
                               final isOnBoardingComplete = onBoardingProvider.isBoardingCompleate;

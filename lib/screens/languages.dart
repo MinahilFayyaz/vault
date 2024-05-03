@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -128,6 +129,7 @@ class _languagesScreenState extends State<languagesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Languages Screen');
     final locale = Localizations.localeOf(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -180,6 +182,12 @@ class _languagesScreenState extends State<languagesScreen> {
                         child: ListTile(
                           onTap: () {
                             _setSelectedLanguage(currentLanguage);
+                            FirebaseAnalytics.instance.logEvent(
+                              name: 'language_selection',
+                              parameters: <String, dynamic>{
+                                'activity': 'language set',
+                              },
+                            );
                           },
                           title: Text(
                             currentLanguage.name,
