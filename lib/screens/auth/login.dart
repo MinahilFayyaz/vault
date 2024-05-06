@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:provider/provider.dart';
@@ -195,7 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                                       shape: CircleBorder(),
                                     ),
                                     child: Text(
-                                      '0',
+                                        '0',
                                       style: TextStyle(
                                         fontSize: 20,
                                         color: Theme.of(context).brightness ==
@@ -236,6 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                                       shape: CircleBorder(),
                                     ),
                                     child: Text(
+                                      //AppLocalizations.of(context)!.digits,
                                       '${index + 1}', // Increment index by 1 to start counting from 1
                                       style: TextStyle(
                                         fontSize: 20,
@@ -251,16 +255,6 @@ class _LoginPageState extends State<LoginPage> {
                             },
                           ),
                         ),
-
-                        //SizedBox(height: size.height * 0.05),
-                        // CustomButton(
-                        //   ontap: () {
-                        //     FocusScope.of(context).unfocus();
-                        //     final pin = _pinControllers.map((controller) => controller.text.trim()).join();
-                        //     validate(pin);
-                        //   },
-                        //   buttontext: 'Login',
-                        // ),
                       ],
                     ),
                   ),
@@ -375,3 +369,5 @@ class CancelButton extends StatelessWidget {
     );
   }
 }
+
+
