@@ -86,78 +86,6 @@
 				<key>UIPrerenderedIcon</key>
 				<string></string>
 			</dict>
-			<key>Rectangle 4925</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>Rectangle 4925</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
-			<key>Rectangle 4924</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>Rectangle 4924</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
-			<key>Rectangle 4924-2</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>Rectangle 4924-2</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
-			<key>Rectangle 4923</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>Rectangle 4923</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
-			<key>Rectangle 4922</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>Rectangle 4922</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
-			<key>icon</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>icon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
-			<key>Rectangle 4921-2</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>Rectangle 4921-2</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
-			<key>Rectangle 4921</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>Rectangle 4921</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<string></string>
-			</dict>
 		</dict>
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
@@ -198,12 +126,6 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSAppTransportSecurity</key>
-	<string>Post videos to profile</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Upload image from camera for screen background</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Post videos to profile</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>In order to access your photo library</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

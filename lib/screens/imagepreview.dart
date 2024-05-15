@@ -291,7 +291,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                                         Theme.of(context).brightness ==
                                             Brightness.light
                                             ? Colors
-                                            .transparent // Color for light theme
+                                            .black // Color for light theme
                                             : Colors.white,
                                         BlendMode.srcIn),
                                     child: SvgPicture.asset(
@@ -330,7 +330,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      AppLocalizations.of(context)!.thePhotoWillBeCompletelyDeleted +'\n'+ AppLocalizations.of(context)!.andCannotBeRecovered,
+                      "the Photo Will Be Completely" +'\n'+ 'deleted and Cannot Be' +'\n' + "Recovered" ,
                       style: TextStyle(
                           fontSize: 14,
                           color:

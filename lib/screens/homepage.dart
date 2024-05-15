@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui';
+
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +12,11 @@ import 'package:hive/hive.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vault/screens/gallery.dart';
 import 'package:vault/screens/settings/premium.dart';
 
 import '../consts/consts.dart';
+import '../permission.dart';
 import '../utils/utils.dart';
 import 'album.dart';
 import 'settings/settings.dart';
@@ -31,47 +32,30 @@ class _HomePageState extends State<HomePage> {
   List<String> folderNames = []; // List to hold folder names
   List<File> selectedImages = [];
   List<String> selectedImagePaths = [];
+
   //List<File> folderContents = []; // Define and initialize folderContents list
   Map<String, List<File>> folderContents = {};
 
-  @override
-  void initState() {
-    super.initState();
-    // Load folder names from shared preferences when the widget initializes
-    _loadFolderNames();
-  }
-
   void _copyImageToFolder(File image, String folderName) {
-    print('Copying image to folder: $folderName');
-
     setState(() {
-      // Add the selected image to the specified folder
-      //folderContents.add(image);
-
       if (!folderContents.containsKey(folderName)) {
         folderContents[folderName] = [];
       }
       folderContents[folderName]!.add(image);
 
-
-      print('Image added to folderContents list');
-
-
-      // Navigate to the FolderContentsPage of the selected folder
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => FolderContentsPage(
             folderName: folderName,
-            folderContents: folderContents[folderName] != null ? folderContents[folderName]! : [],
-            updateFolderContents: (updatedContents) => _updateFolderContents(folderName, updatedContents),
+            folderContents: folderContents[folderName] != null
+                ? folderContents[folderName]!
+                : [],
+            updateFolderContents: (updatedContents) =>
+                _updateFolderContents(folderName, updatedContents),
           ),
-
         ),
       );
-
-
-      print('Navigated to FolderContentsPage');
     });
   }
 
@@ -82,8 +66,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-
-
   // Method to load folder names from shared preferences
   Future<void> _loadFolderNames() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -93,13 +75,15 @@ class _HomePageState extends State<HomePage> {
     //List<String>? savedImagePaths = prefs.getStringList('selectedImagePaths');
 
     var box = await Hive.openBox('selected_images');
-    List<String>? savedImagePaths = box.get('images');
+    List<String>? savedImagePaths = box.get('images')?.cast<String>();
     setState(() {
       // Check if savedFolderNames is null or empty, if so, add default folders
       if (savedFolderNames == null || savedFolderNames.isEmpty) {
-        folderNames.addAll([AppLocalizations.of(context)!.home, 'Whatsapp']);
+        folderNames.addAll(['Home', 'WhatsApp']);
         _saveFolderNames();
-        print('Loading folder set state names and selected image paths');// Save default folders to shared preferences
+
+        print(
+            'Loading folder set state names and selected image paths'); // Save default folders to shared preferences
       } else {
         folderNames = savedFolderNames;
       }
@@ -114,7 +98,8 @@ class _HomePageState extends State<HomePage> {
   // Method to save folder names to shared preferences
   Future<void> _saveFolderNames() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> imagePaths = selectedImages.map((image) => image.path).toList();
+    List<String> imagePaths =
+    selectedImages.map((image) => image.path).toList();
     print('Image paths to save: $imagePaths');
     await prefs.setStringList('folderNames', folderNames);
     await prefs.setStringList('selectedImagePaths', imagePaths);
@@ -128,14 +113,48 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
         builder: (context) => FolderContentsPage(
           folderName: folderName,
-          folderContents: folderContents[folderName] != null ? folderContents[folderName]! : [],
-          updateFolderContents: (updatedContents) => _updateFolderContents(folderName, updatedContents),
+          isFirstAddButtonClick: isFirstAddButtonClick,
+          folderContents: folderContents[folderName] != null
+              ? folderContents[folderName]!
+              : [],
+          updateFolderContents: (updatedContents) =>
+              _updateFolderContents(folderName, updatedContents),
         ),
-
       ),
     );
   }
 
+  bool isFirstAddButtonClick = true;
+
+// Method to check if it's the app's first launch
+  Future<bool> isFirstAppLaunch() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+    if (isFirstLaunch) {
+      // Set the flag to indicate that it's not the first launch anymore
+      prefs.setBool('isFirstLaunch', false);
+    }
+    return isFirstLaunch;
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    // Load folder names from shared preferences when the widget initializes
+    _loadFolderNames();
+    isFirstAppLaunch().then((isFirstLaunch) {
+      setState(() {
+        isFirstAddButtonClick = isFirstLaunch;
+      });
+    });
+    _saveIsFirstAddButtonClick(isFirstAddButtonClick);
+  }
+
+  Future<void> _saveIsFirstAddButtonClick(bool isFirstButtonClick) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstAddButtonClick', isFirstAddButtonClick);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +205,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             title: Text(
-                //AppLocalizations.of(context)!.share,
+              //AppLocalizations.of(context)!.share,
               AppLocalizations.of(context)!.locker,
               style: TextStyle(
                 //color: Colors.white,
@@ -265,19 +284,22 @@ class _HomePageState extends State<HomePage> {
                       child: Wrap(
                         alignment: WrapAlignment.start,
                         runAlignment: WrapAlignment.start,
-                        spacing: screenWidth * 0.02, // Add spacing between the containers
-                        runSpacing: screenHeight * 0.01, // Add spacing between the rows
+                        spacing: screenWidth * 0.02,
+                        // Add spacing between the containers
+                        runSpacing: screenHeight * 0.01,
+                        // Add spacing between the rows
                         children: [
                           GestureDetector(
                             onTap: () async {
-                              String? folderName = await _showAddFolderDialog(context);
+                              String? folderName =
+                              await _showAddFolderDialog(context);
                               if (folderName != null && folderName.isNotEmpty) {
                                 setState(() {
-                                  folderNames.add(folderName); // Add the new folder to the list
+                                  folderNames.add(
+                                      folderName); // Add the new folder to the list
                                   _saveFolderNames();
                                 });
                               }
-                              //_navigateToFolderContents(folderName!);
                               FirebaseAnalytics.instance.logEvent(
                                 name: 'home_new_album_added',
                                 parameters: <String, dynamic>{
@@ -290,10 +312,12 @@ class _HomePageState extends State<HomePage> {
                               height: screenHeight * 0.13,
                               width: screenWidth * 0.29,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.light
+                                color: Theme.of(context).brightness ==
+                                    Brightness.light
                                     ? Color(0xFFF5F5F5) // Color for light theme
                                     : Consts.FG_COLOR,
-                                borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                                borderRadius:
+                                BorderRadius.circular(screenHeight * 0.02),
                               ),
                               child: Icon(
                                 Icons.add,
@@ -304,7 +328,7 @@ class _HomePageState extends State<HomePage> {
                           // Dynamically generate containers for each folder name
                           for (String folderName in folderNames)
                             GestureDetector(
-                              onTap: (){
+                              onTap: () {
                                 _navigateToFolderContents(folderName);
                                 FirebaseAnalytics.instance.logEvent(
                                   name: 'home_album_clicked',
@@ -318,23 +342,27 @@ class _HomePageState extends State<HomePage> {
                                 height: screenHeight * 0.13,
                                 width: screenWidth * 0.29,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).brightness == Brightness.light
+                                  color: Theme.of(context).brightness ==
+                                      Brightness.light
                                       ? Color(0xFFF5F5F5) // Color for light theme
                                       : Consts.FG_COLOR,
-                                  borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                                  borderRadius:
+                                  BorderRadius.circular(screenHeight * 0.02),
                                 ),
                                 child: Center(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      SvgPicture.asset('assets/46 Open File, Document, Folder.svg'),
+                                      SvgPicture.asset(
+                                          'assets/46 Open File, Document, Folder.svg'),
                                       SizedBox(height: screenHeight * 0.01),
                                       Text(
                                         folderName,
                                         style: TextStyle(
                                           //color: Colors.white,
                                           fontSize: 12,
-                                          fontFamily: 'Gilroy', // Apply Gilroy font family
+                                          fontFamily:
+                                          'Gilroy', // Apply Gilroy font family
                                         ),
                                       ),
                                     ],
@@ -349,7 +377,7 @@ class _HomePageState extends State<HomePage> {
                     Row(
                       children: [
                         Text(
-                          AppLocalizations.of(context)!.media,
+                        AppLocalizations.of(context)!.media,
                           style: TextStyle(
                             fontSize: screenWidth * 0.05,
                             fontWeight: FontWeight.w400,
@@ -376,20 +404,47 @@ class _HomePageState extends State<HomePage> {
                       child: Wrap(
                         alignment: WrapAlignment.start,
                         runAlignment: WrapAlignment.start,
-                        spacing: screenWidth * 0.02, // Add spacing between the containers
-                        runSpacing: screenHeight * 0.01, // Add spacing between the rows
+                        spacing: screenWidth * 0.02,
+                        // Add spacing between the containers
+                        runSpacing: screenHeight * 0.01,
+                        // Add spacing between the rows
                         children: [
                           GestureDetector(
                             onTap: () async {
-                              // Open the gallery
-                              final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-                              if (pickedFile != null) {
-                                setState(() {
-                                  // Add the picked image to the list of selected images
-                                  selectedImages.add(File(pickedFile.path));
-                                  _saveFolderNames();
-                                });
+                              print('isFirstAddButtonClick : $isFirstAddButtonClick');
+                              // Check if it's the first launch and if the "Add" button is clicked before opening any album
+                              if (await isFirstAppLaunch() && isFirstAddButtonClick) {
+                                SharedPreferences prefs = await SharedPreferences.getInstance();
+                                bool hasRequestedPermission = prefs.getBool('hasRequestedPermission') ?? false;
+
+                                if (!hasRequestedPermission) {
+                                  // Set the flag to indicate that permission has been requested
+                                  prefs.setBool('hasRequestedPermission', true);
+
+                                  // Show the permission screen before accessing the image picker
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => Permission(folderName: ''),
+                                    ),
+                                  );
+                                  setState(() {
+                                    isFirstAddButtonClick = false;
+                                  });
+                                  _saveIsFirstAddButtonClick(isFirstAddButtonClick);
+                                  return; // Return to avoid opening the image picker immediately
+                                }
                               }
+
+                              final pickedFiles =
+                              await ImagePicker().pickMultipleMedia();
+                              for (final pickedFile in pickedFiles) {
+                                selectedImages.add(File(pickedFile.path));
+                              }
+                              setState(() {
+                                _saveFolderNames();
+                              });
+
                               FirebaseAnalytics.instance.logEvent(
                                 name: 'home_image_picker_from_gallery_clicked',
                                 parameters: <String, dynamic>{
@@ -402,10 +457,12 @@ class _HomePageState extends State<HomePage> {
                               height: screenHeight * 0.13,
                               width: screenWidth * 0.29,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.light
+                                color: Theme.of(context).brightness ==
+                                    Brightness.light
                                     ? Color(0xFFF5F5F5) // Color for light theme
                                     : Consts.FG_COLOR,
-                                borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                                borderRadius:
+                                BorderRadius.circular(screenHeight * 0.02),
                               ),
                               child: Icon(
                                 Icons.add,
@@ -414,30 +471,92 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                           // Dynamically generate containers for each selected image
-                          for (File image in selectedImages)
-                            GestureDetector(
-                              onTap: () {
-                                _showImageOptionsBottomSheet(context, image);
-                                FirebaseAnalytics.instance.logEvent(
-                                  name: 'home_media_image_clicked',
-                                  parameters: <String, dynamic>{
-                                    'activity': 'Navigating to image actions',
-                                    'action': 'Image clicked',
-                                  },
-                                );
-                              },
-                              child: Container(
+                          // for (File image in selectedImages)
+                          ...List.generate(selectedImages.length, (index) {
+                            String extension = selectedImages[index]
+                                .path
+                                .split('.')
+                                .last
+                                .toLowerCase();
+                            if (extension == 'mp4' || extension == 'mov') {
+                              // It's a video file
+
+                              return Container(
                                 height: screenHeight * 0.13,
                                 width: screenWidth * 0.29,
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(screenHeight * 0.02),
-                                  child: Image.file(
-                                    image,
-                                    fit: BoxFit.cover, // Fit the image to cover the container
+                                  borderRadius:
+                                  BorderRadius.circular(screenHeight * 0.02),
+                                  child: FutureBuilder<Uint8List?>(
+                                    future: GalleryService.generateVideoThumbnail(
+                                        selectedImages[index].path),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return Container(
+                                          color: Colors.grey,
+                                        );
+                                      } else if (snapshot.hasData) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            _showImageOptionsBottomSheet(
+                                                context, selectedImages[index]);
+                                          },
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            fit: StackFit.loose,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                      BorderRadius.circular(12),
+                                                      child: Image.memory(
+                                                        snapshot.data!,
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              Icon(
+                                                Icons.play_arrow,
+                                                color: Colors.white,
+                                                size: 30,
+                                              )
+                                            ],
+                                          ),
+                                        );
+                                      } else {
+                                        return Container();
+                                      }
+                                    },
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            } else {
+                              return GestureDetector(
+                                onTap: () {
+                                  _showImageOptionsBottomSheet(
+                                      context, selectedImages[index]);
+                                },
+                                child: Container(
+                                  height: screenHeight * 0.13,
+                                  width: screenWidth * 0.29,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                        screenHeight * 0.02),
+                                    child: Image.file(
+                                      selectedImages[index],
+                                      fit: BoxFit
+                                          .cover, // Fit the image to cover the container
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                          }).toList().reversed,
                         ],
                       ),
                     ),
@@ -451,11 +570,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
- Future<void> _showAlbumSelectionDialog(BuildContext context, File image) async {
+  Future<void> _showAlbumSelectionDialog(
+      BuildContext context, File image) async {
     return showModalBottomSheet(
       backgroundColor: Theme.of(context).brightness == Brightness.light
-        ? Color(0xFFFFFFFF) // Color for light theme
-        : Consts.FG_COLOR,
+          ? Color(0xFFFFFFFF) // Color for light theme
+          : Consts.FG_COLOR,
       context: context,
       builder: (BuildContext context) {
         final screenWidth = MediaQuery.of(context).size.width;
@@ -468,36 +588,43 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: SvgPicture.asset('assets/Home Indicator.svg')),
+                Center(child:
+                Theme.of(context).brightness == Brightness.light
+                    ? ColorFiltered(colorFilter: ColorFilter.mode(
+                    Colors.black, BlendMode.srcIn),
+                    child :  SvgPicture.asset('assets/Home Indicator.svg')
+                )// Color for light theme
+                    :       SvgPicture.asset('assets/Home Indicator.svg')
+                ),
+                SizedBox(height: screenHeight * 0.01,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                     Text(
                       AppLocalizations.of(context)!.addToAlbum,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        //color: Colors.white,
                         fontSize: 18,
                         fontFamily: 'Gilroy',
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        AppLocalizations.of(context)!.cancel,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).brightness == Brightness.light
-                              ? Color(0xFF666666)// Color for light theme
-                              : Color(0xFF999999),
-                          fontSize: 14,
-                          fontFamily: 'Gilroy',
-                          fontWeight: FontWeight.w700,
-                        ),
-                      )
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          AppLocalizations.of(context)!.cancel,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Color(0xFF666666)// Color for light theme
+                                : Color(0xFF999999),
+                            fontSize: 14,
+                            fontFamily: 'Gilroy',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
                     ),
                   ],
                 ),
@@ -512,7 +639,8 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       GestureDetector(
                         onTap: () async {
-                          String? folderName = await _showAddFolderDialog(context);
+                          String? folderName =
+                          await _showAddFolderDialog(context);
                           if (folderName != null && folderName.isNotEmpty) {
                             setState(() {
                               folderNames.add(folderName);
@@ -526,10 +654,12 @@ class _HomePageState extends State<HomePage> {
                           height: screenHeight * 0.13,
                           width: screenWidth * 0.29,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.light
+                            color:
+                            Theme.of(context).brightness == Brightness.light
                                 ? Color(0xFFE8E8E8) // Color for light theme
                                 : Consts.BG_COLOR,
-                            borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                            borderRadius:
+                            BorderRadius.circular(screenHeight * 0.02),
                           ),
                           child: Icon(
                             Icons.add,
@@ -543,28 +673,26 @@ class _HomePageState extends State<HomePage> {
                           onTap: () {
                             // Copy the image to the selected folder
                             _copyImageToFolder(image, folderName);
-                            FirebaseAnalytics.instance.logEvent(
-                              name: 'home_pselected_image_clicked',
-                              parameters: <String, dynamic>{
-                                'activity': 'image added to selected album',
-                                'action': 'Button clicked',
-                              },
-                            );
+                            // Navigate to the folder contents page
+                            //_navigateToFolderContents(folderName);
                           },
                           child: Container(
                             height: screenHeight * 0.13,
                             width: screenWidth * 0.29,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.light
+                              color:
+                              Theme.of(context).brightness == Brightness.light
                                   ? Color(0xFFE8E8E8) // Color for light theme
                                   : Consts.BG_COLOR,
-                              borderRadius: BorderRadius.circular(screenHeight * 0.02),
+                              borderRadius:
+                              BorderRadius.circular(screenHeight * 0.02),
                             ),
                             child: Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  SvgPicture.asset('assets/46 Open File, Document, Folder.svg'),
+                                  SvgPicture.asset(
+                                      'assets/46 Open File, Document, Folder.svg'),
                                   SizedBox(height: screenHeight * 0.01),
                                   Text(
                                     folderName,
@@ -590,7 +718,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _showImageOptionsBottomSheet(BuildContext context, File image) async {
+  Future<void> _showImageOptionsBottomSheet(
+      BuildContext context, File image) async {
     final screenWidth = MediaQuery.of(context).size.width;
     final double paddingValue = screenWidth * 0.04;
     final double iconSize = screenWidth * 0.06;
@@ -604,7 +733,9 @@ class _HomePageState extends State<HomePage> {
             color: Theme.of(context).brightness == Brightness.light
                 ? Color(0xFFFFFFFF) // Color for light theme
                 : Consts.FG_COLOR, // Set background color
-            borderRadius: BorderRadius.vertical(top: Radius.circular(screenWidth * 0.05)), // Add rounded corners at the top
+            borderRadius: BorderRadius.vertical(
+                top: Radius.circular(
+                    screenWidth * 0.05)), // Add rounded corners at the top
           ),
           child: Padding(
             padding: EdgeInsets.fromLTRB(0, 0, 0, paddingValue * 2),
@@ -618,8 +749,8 @@ class _HomePageState extends State<HomePage> {
                     child:Theme.of(context).brightness == Brightness.light
                         ? ColorFiltered(colorFilter: ColorFilter.mode(
                         Colors.black, BlendMode.srcIn),
-                       child :  SvgPicture.asset('assets/image-gallery 1.svg')
-          )// Color for light theme
+                        child :  SvgPicture.asset('assets/image-gallery 1.svg')
+                    )// Color for light theme
                         :       SvgPicture.asset('assets/image-gallery 1.svg'),
 
                   ),
@@ -639,13 +770,13 @@ class _HomePageState extends State<HomePage> {
                 ),
                 ListTile(
                   leading: Padding(
-                    padding: EdgeInsets.only(left: paddingValue),
-                    child: Theme.of(context).brightness == Brightness.light
-                        ? ColorFiltered(colorFilter: ColorFilter.mode(
-                        Colors.black, BlendMode.srcIn),
-                        child :  SvgPicture.asset('assets/download (1) 1.svg')
-                    )
-                   : SvgPicture.asset('assets/download (1) 1.svg')
+                      padding: EdgeInsets.only(left: paddingValue),
+                      child: Theme.of(context).brightness == Brightness.light
+                          ? ColorFiltered(colorFilter: ColorFilter.mode(
+                          Colors.black, BlendMode.srcIn),
+                          child :  SvgPicture.asset('assets/download (1) 1.svg')
+                      )
+                          : SvgPicture.asset('assets/download (1) 1.svg')
                   ),
                   title: Padding(
                     padding: EdgeInsets.only(left: paddingValue),
@@ -659,11 +790,6 @@ class _HomePageState extends State<HomePage> {
                   onTap: () async {
                     // Save image to photos
                     final result = await saveImageToGallery(image);
-                    if (result) {
-
-                    } else {
-
-                    }
                     Navigator.pop(context);
                   },
                 ),
@@ -714,6 +840,7 @@ class _HomePageState extends State<HomePage> {
       return false;
     }
   }
+
   // Method to show the add folder dialog
   Future<String?> _showAddFolderDialog(BuildContext context) async {
     TextEditingController controller = TextEditingController();
@@ -722,92 +849,97 @@ class _HomePageState extends State<HomePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           //backgroundColor: Consts.FG_COLOR,
-          title: Center(child: Text(AppLocalizations.of(context)!.createNewAlbum,
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700
-            ),
-          )),
+          title: Center(
+              child: Text(
+                AppLocalizations.of(context)!.createNewAlbum,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              )),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Text(AppLocalizations.of(context)!.enterANameForThisAlbum,
-                style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w500
-                ),
-              )),
+              Center(
+                  child: Text(
+                    AppLocalizations.of(context)!.enterANameForThisAlbum,
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500),
+                  )),
               SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
-                    border: Border.all(
-                        color: Consts.COLOR), // Border around the TextField
-                    borderRadius: BorderRadius.circular(8.0), // Rounded corners
-                    //color: Consts.BG_COLOR
+                  border: Border.all(
+                      color: Consts.COLOR), // Border around the TextField
+                  borderRadius: BorderRadius.circular(8.0), // Rounded corners
+                  //color: Consts.BG_COLOR
                 ),
                 child: TextField(
                   controller: controller,
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context)!.title,
                     border: InputBorder.none, // Remove default border
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    contentPadding:
+                    EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   ),
                 ),
               ),
             ],
           ),
           actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                // Add your cancel logic here
-                Navigator.pop(context);
-              },
-              style: ButtonStyle(
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    // Add your cancel logic here
+                    Navigator.pop(context);
+                  },
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                    minimumSize: MaterialStateProperty.all(Size(100, 40)),
+                    // Set button size
+                    backgroundColor: MaterialStateProperty.all(
+                      Theme.of(context).brightness == Brightness.light
+                          ? Color(0xFFE8E8E8) // Color for light theme
+                          : Consts.BG_COLOR,
+                    ), // Set background color
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.cancel,
+                    style: TextStyle(color: Colors.grey),
                   ),
                 ),
-                minimumSize: MaterialStateProperty.all(Size(120, 40)), // Set button size
-                backgroundColor: MaterialStateProperty.all(
-                  Theme.of(context).brightness == Brightness.light
-                      ? Color(0xFFE8E8E8) // Color for light theme
-                      : Consts.BG_COLOR,
-                ), // Set background color
-              ),
-              child: Text(
-                AppLocalizations.of(context)!.cancel,
-                style: TextStyle(
-                  color: Colors.grey
-                ),
-              ),
-            ),
-            SizedBox(width: 5,),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(controller.text);
-              },
-              style: ButtonStyle(
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    side: const BorderSide(color: Consts.COLOR),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(controller.text);
+                  },
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        side: const BorderSide(color: Consts.COLOR),
+                      ),
+                    ),
+                    minimumSize: MaterialStateProperty.all(Size(100, 40)),
+                    // Set button size
+                    backgroundColor: MaterialStateProperty.all(
+                        Consts.COLOR), // Set background color
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.confirm,
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
-                minimumSize: MaterialStateProperty.all(Size(120, 40)), // Set button size
-                backgroundColor: MaterialStateProperty.all(Consts.COLOR), // Set background color
-              ),
-              child: Text(
-                AppLocalizations.of(context)!.confirm,
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+              ],
+            )
           ],
         );
       },
     );
   }
-
 }

@@ -33,11 +33,11 @@ Future<void> main() async{
    await GetStorage.init(); // Initialize GetStorage
    final String languageCode = GetStorage().read('selectedLanguageCode') ?? 'en';
    await Hive.initFlutter();
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
+  // FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  // PlatformDispatcher.instance.onError = (error, stack) {
+  //   FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+  //   return true;
+  // };
   FirebaseAnalytics analytics = FirebaseAnalytics.instance;
   analytics.logAppOpen();
   SystemChrome.setPreferredOrientations([

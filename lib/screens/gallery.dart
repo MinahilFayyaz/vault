@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+
+// import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -9,518 +11,16 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:vault/screens/homepage.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import '../consts/consts.dart';
-import 'imagepreview.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class GalleryScreen extends StatefulWidget {
-  final String? folderName;
-
-  const GalleryScreen({Key? key, required this.folderName}) : super(key: key);
-
-  @override
-  State<GalleryScreen> createState() => _GalleryScreenState();
-}
-
-class _GalleryScreenState extends State<GalleryScreen> {
-  List<Widget> _images = [];
-  List<bool> _isSelected = [];
-  int selectedCount = 0;
-  int currentPage = 0;
-  HiveService hiveService = HiveService();
-  List<AssetPathEntity> albums = [];
-  List<String> selectedImagePaths = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchGallery();
-  }
-
-  Future<void> _fetchGallery() async {
-    final PermissionState permissionState =
-    await PhotoManager.requestPermissionExtend();
-    if (permissionState.isAuth) {
-      _fetchImages();
-    } else {
-      _showPermissionDialog();
-    }
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(AppLocalizations.of(context)!.permissionRequired),
-          content: Text(AppLocalizations.of(context)!.pleaseGrantPermissionToAcsessPhotos),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text(AppLocalizations.of(context)!.ok),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _fetchImages() async {
-    albums = await PhotoManager.getAssetPathList(onlyAll: true);
-
-    if (albums.isNotEmpty) {
-      List<AssetEntity> media =
-      await albums[0].getAssetListPaged(size: 60, page: currentPage);
-      print('album[0]: ${albums[0]}');
-      List<Widget> tempImages = [];
-      List<bool> tempSelected = [];
-
-      for (var asset in media) {
-        if (asset.type == AssetType.image || asset.type == AssetType.video) {
-          tempImages.add(
-            GestureDetector(
-              // onTap: () => _onImageTap(asset),
-              child: FutureBuilder(
-                future: asset.file,
-                builder: (BuildContext context, AsyncSnapshot<File?> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    final file = snapshot.data;
-                    if (file != null) {
-                      return _buildImageWidget(file, asset.type);
-                    }
-                  }
-                  return const Center(child: CircularProgressIndicator());
-                },
-              ),
-            ),
-          );
-          tempSelected.add(false);
-        }
-      }
-
-      setState(() {
-        _images.addAll(tempImages);
-        _isSelected.addAll(tempSelected);
-        currentPage++;
-      });
-    } else {
-      _showAlbumNotFoundDialog();
-    }
-  }
-
-  void _showAlbumNotFoundDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Album Not Found'),
-        content: const Text('The album was not found in your photo library.'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _onImageTap(AssetEntity asset) async {
-    final file = await asset.file;
-    if (file != null) {
-      if (asset.type == AssetType.image) {
-        final imageName = file.path.split('/').last;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ImagePreviewScreen(
-              imageFile: file,
-              imageName: imageName,
-              folderName: '',
-            ),
-          ),
-        );
-      } else if (asset.type == AssetType.video) {
-        print("video : $file");
-        final videoName = file!.path.split('/').last;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ImagePreviewScreen(
-              imageFile: file,
-              imageName: videoName,
-              folderName: '',
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  Widget _buildImageWidget(File file, AssetType type) {
-    final String filePath = file.path.toLowerCase();
-    if (filePath.endsWith('.mp4') || filePath.endsWith('.mov')) {
-      // print(
-      //     'file path : $type'); // If it's a video file, return a video player widget
-      return _buildVideoWidget(file);
-    } else {
-      // print('file path : $type');
-      // If it's an image file, load it as an image
-      return FutureBuilder(
-        future: file.readAsBytes(),
-        builder:
-            (BuildContext context, AsyncSnapshot<Uint8List> bytesSnapshot) {
-          if (bytesSnapshot.connectionState == ConnectionState.done) {
-            final bytes = bytesSnapshot.data;
-            if (bytes != null) {
-              return Container(
-                  width: 100, // Set a fixed width for the image
-                  height: 100,
-                  child: Image.memory(bytes, fit: BoxFit.cover));
-            }
-          }
-          return const Center(child: CircularProgressIndicator());
-        },
-      );
-    }
-  }
-
-  Widget _buildVideoWidget(File file) {
-    return FutureBuilder(
-      future: _generateThumbnail(file),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done &&
-            snapshot.data != null) {
-          final Uint8List thumbnailBytes = snapshot.data as Uint8List;
-          return Image.memory(
-            thumbnailBytes,
-            width: 100, // Set a fixed width for the thumbnail
-            height: 100,
-            fit: BoxFit.cover,
-          );
-        } else {
-          return const Center(child: CircularProgressIndicator());
-        }
-      },
-    );
-  }
-
-  Future<Uint8List?> _generateThumbnail(File file) async {
-    final thumbnail = await VideoThumbnail.thumbnailData(
-      video: file.path,
-      imageFormat: ImageFormat.PNG, // Choose the desired image format
-      quality: 50, // Adjust the quality of the thumbnail (0 - 100)
-    );
-    return thumbnail;
-  }
-
-  Future<Uint8List> _getVideoBytes(String filePath) async {
-    File file = File(filePath);
-    return await file.readAsBytes();
-  }
-
-  Future<void> saveSelectedImagesToDatabase() async {
-    int selectedImageCount =
-        _isSelected.where((isSelected) => isSelected).length;
-    print('Number of selected images: $selectedImageCount');
-
-    print('Saving selected images to the database...');
-    bool allImagesSaved = true;
-
+class GalleryService {
+  static Future<bool?> showConfirmationDialog(BuildContext context,
+      {List<String> selectedImagePaths = const [],
+        String folderName = ''}) async {
     if (selectedImagePaths.isEmpty) {
-      print('No selected image paths');
-      return;
+      // No images selected, so return null indicating no action
+      return null;
     }
-
-    for (int i = 0; i < selectedImagePaths.length; i++) {
-      // if (_isSelected[i]) {
-      final String mediaPath = selectedImagePaths[i];
-      // print('Media path at index $i: $mediaPath');
-
-      // Determine the type of media based on file extension
-      String extension = mediaPath.split('.').last.toLowerCase();
-      if (extension == 'mp4' || extension == 'mov') {
-        // It's a video file
-        print('Saving video at index $i...');
-        try {
-          // Uint8List videoBytes = await _getVideoBytes(mediaPath);
-          await hiveService.storeVideo(mediaPath, widget.folderName!);
-          print('Video at index $i saved successfully');
-        } catch (error) {
-          print('Failed to save video at index $i: $error');
-          allImagesSaved = false;
-        }
-      } else {
-        Uint8List imageBytes = await _getImageBytes(selectedImagePaths[i]);
-
-        print('Image bytes at index $i: ${imageBytes.length}');
-        if (imageBytes.isNotEmpty) {
-          try {
-            await hiveService.storeImage(imageBytes, widget.folderName!);
-            print('Image $i saved successfully');
-          } catch (error) {
-            print('Failed to save image $i: $error');
-            allImagesSaved = false;
-          }
-        } else {
-          print('Image bytes at index $i are empty');
-          allImagesSaved = false;
-        }
-      }
-      // }
-    }
-
-    selectedImagePaths.clear();
-
-    if (allImagesSaved) {
-      _showSnackBar('All selected images have been saved to the database.');
-      //_openSavedImagesScreen();
-    } else {
-      _showSnackBar('Some images have not been saved to the database.');
-    }
-    Navigator.pop(context, true);
-  }
-
-  Future<Uint8List> _getImageBytes(String filePath) async {
-    try {
-      // Create a File object from the given file path
-      File file = File(filePath);
-
-      // Read the file as bytes
-      Uint8List fileData = await file.readAsBytes();
-
-      if (fileData.isNotEmpty) {
-        // If the file data is not empty, return the bytes
-        return fileData;
-      } else {
-        print('File data is empty for path $filePath');
-        return Uint8List(0);
-      }
-    } catch (error) {
-      print('Error reading image bytes for path $filePath: $error');
-      return Uint8List(0);
-    }
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
-  addImageToSelectedImages(Widget widget, bool isSelected) async {
-    print('MK: isSelected: $isSelected for ${selectedImagePaths.length}');
-    // Create a temporary list to hold the paths
-
-    // Check if the widget is a GestureDetector
-    if (widget is GestureDetector) {
-      // Extract the child widget from GestureDetector
-      final child = widget.child;
-
-      // Check if the child is a FutureBuilder
-      if (child is FutureBuilder) {
-        // Retrieve the future from the FutureBuilder
-        final future = child.future;
-
-        // Await the future to get the file
-        final file = await future;
-
-        // Check if the file is not null and add its path to the list
-        if (file != null) {
-          print('file ${file}');
-          if (file.path.toLowerCase().endsWith('.mp4') ||
-              file.path.toLowerCase().endsWith('.mov')) {
-            print('file ends with mp4 ${file.path}');
-            // If it's a video, add its path directly
-            // selectedImagePaths.add(file.path);
-          } else {
-            print('file ends with jpg ${file.path}');
-            // If it's an image, add its path after converting to bytes
-            Uint8List bytes = await file.readAsBytes();
-          }
-          if (isSelected) {
-            selectedImagePaths.add(file.path);
-          } else if (selectedImagePaths.contains(file.path)) {
-            selectedImagePaths.remove(file.path);
-          }
-        }
-      }
-    }
-
-    // Update state with the collected paths
-    setState(() {
-      selectedImagePaths = selectedImagePaths;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    FirebaseAnalytics.instance.setCurrentScreen(screenName: 'Gallery Screen');
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).brightness == Brightness.light
-              ? Color(0xFFFFFFFF) // Color for light theme
-              : Consts.FG_COLOR,
-          title: Text(widget.folderName!),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 20.0),
-              child: Text(selectedCount.toString(),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18
-              ),),
-            )
-          ],
-        ),
-        body: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1 / 1,
-              mainAxisSpacing: 3.0, // Adjust spacing between rows as desired
-              crossAxisSpacing: 3.0,
-            ),
-            itemCount: _images.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isSelected[index] = !_isSelected[index];
-                    selectedCount += _isSelected[index] ? 1 : -1;
-                  });
-                  addImageToSelectedImages(_images[index], _isSelected[index]);
-                },
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: _images[index],
-                      ),
-                    ),
-                    if (_isSelected[index])
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: SvgPicture.asset(
-                          "assets/Group 21245.svg"
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            }),
-        bottomNavigationBar: BottomNavigationBar(
-          onTap: (index) {
-            if (index == 0) {
-              _selectAllImages();
-              FirebaseAnalytics.instance.logEvent(
-                name: 'gallery_select_all',
-                parameters: <String, dynamic>{
-                  'activity': 'Selecting all media',
-                  'action': 'Select All Clicked',
-                },
-              );
-            } else if (index == 1) {
-              _showConfirmationDialog();
-              FirebaseAnalytics.instance.logEvent(
-                name: 'gallery_lock_all',
-                parameters: <String, dynamic>{
-                  'activity': 'lock Selected media',
-                  'action': 'lock Clicked',
-                },
-              );
-            }
-          },
-          items:  [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.select_all),
-              label: AppLocalizations.of(context)!.selectAll,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.lock),
-              label: AppLocalizations.of(context)!.lock,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _selectAllImages() async {
-    setState(() {
-      // Determine whether to select all images or deselect all images
-      if (selectedCount == _images.length) {
-        // Deselect all images
-        _isSelected = List.generate(_images.length, (_) => false);
-        selectedCount = 0;
-        selectedImagePaths.clear();
-      } else {
-        // Select all images
-        _isSelected = List.generate(_images.length, (_) => true);
-        selectedCount = _images.length;
-      }
-    });
-
-    // Create a temporary list to hold the paths
-    List<String> tempImagePaths = [];
-    List<AssetType> tempImageTypes = [];
-
-    // Iterate over each image and collect paths
-    for (int i = 0; i < _images.length; i++) {
-      // Extract the widget from the list
-      final widget = _images[i];
-
-      // Check if the widget is a GestureDetector
-      if (widget is GestureDetector) {
-        // Extract the child widget from GestureDetector
-        final child = widget.child;
-
-        // Check if the child is a FutureBuilder
-        if (child is FutureBuilder) {
-          // Retrieve the future from the FutureBuilder
-          final future = child.future;
-
-          // Await the future to get the file
-          final file = await future;
-
-          // Check if the file is not null and add its path to the list
-          if (file != null) {
-            print('file ${file}');
-            if (file.path.toLowerCase().endsWith('.mp4') ||
-                file.path.toLowerCase().endsWith('.mov')) {
-              print('file ends with mp4 ${file.path}');
-              // If it's a video, add its path directly
-              tempImagePaths.add(file.path);
-            } else {
-              print('file ends with jpg ${file.path}');
-              // If it's an image, add its path after converting to bytes
-              Uint8List bytes = await file.readAsBytes();
-              tempImagePaths.add(file.path);
-            }
-          }
-        }
-      }
-    }
-
-    // Update state with the collected paths
-    setState(() {
-      selectedImagePaths = tempImagePaths;
-      print('selectedImagePaths after selection: $selectedImagePaths');
-    });
-  }
-
-  void _showConfirmationDialog() {
-    showDialog(
+    return await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -582,7 +82,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              AppLocalizations.of(context)!.moveIn,
+                              'Move In',
                               style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.w700),
                             ),
@@ -600,7 +100,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                    AppLocalizations.of(context)!.areYouSureYouWantToMove+'\n$selectedCount items(s)'+AppLocalizations.of(context)!.inTheGalleryVault+'?',
+                      'Are you sure you want to move\n${selectedImagePaths.length} item(s)in the GalleryVault?',
                       style: TextStyle(
                           fontSize: 16,
                           color:
@@ -617,7 +117,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   TextButton(
                     onPressed: () {
                       // Add your cancel logic here
-                      Navigator.pop(context);
+                      Navigator.pop(context, false);
                     },
                     style: ButtonStyle(
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -634,7 +134,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       ), // Set background color
                     ),
                     child: Text(
-                      AppLocalizations.of(context)!.cancel,
+                      'Cancel',
                       style: TextStyle(
                           color:
                           Theme.of(context).brightness == Brightness.light
@@ -643,9 +143,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      saveSelectedImagesToDatabase();
+                    onPressed: () async {
+                      Navigator.pop(
+                          context,
+                          await saveSelectedImagesToDatabase(context,
+                              selectedImagePaths: selectedImagePaths,
+                              folderName: folderName));
                       FirebaseAnalytics.instance.logEvent(
                         name: 'gallery_lock_confirm',
                         parameters: <String, dynamic>{
@@ -663,8 +166,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                         ),
                       ),
                     ),
-                    child: Text(
-                      AppLocalizations.of(context)!.confirm,
+                    child: const Text(
+                      'Confirm',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -677,6 +180,309 @@ class _GalleryScreenState extends State<GalleryScreen> {
           ),
         );
       },
+    );
+  }
+
+  static Future<bool> saveSelectedImagesToDatabase(BuildContext context,
+      {List<String> selectedImagePaths = const [],
+        String folderName = ''}) async {
+    int selectedImageCount = selectedImagePaths.length;
+    print('Number of selected images: $selectedImageCount');
+
+    print('Saving selected images to the database...');
+    bool allImagesSaved = true;
+
+    if (selectedImagePaths.isEmpty) {
+      print('No selected image paths');
+      return false;
+    }
+
+    for (int i = 0; i < selectedImagePaths.length; i++) {
+      // if (_isSelected[i]) {
+      final String mediaPath = selectedImagePaths[i];
+      // print('Media path at index $i: $mediaPath');
+
+      HiveService hiveService = HiveService();
+
+      // Determine the type of media based on file extension
+      String extension = mediaPath.split('.').last.toLowerCase();
+      if (extension == 'mp4' || extension == 'mov') {
+        // It's a video file
+        print('Saving video at index $i...');
+        try {
+          // Uint8List videoBytes = await _getVideoBytes(mediaPath);
+          await hiveService.storeVideo(mediaPath, folderName);
+          print('Video at index $i saved successfully');
+        } catch (error) {
+          print('Failed to save video at index $i: $error');
+          allImagesSaved = false;
+        }
+      } else {
+        Uint8List imageBytes = await getImageBytes(selectedImagePaths[i]);
+
+        print('Image bytes at index $i: ${imageBytes.length}');
+        if (imageBytes.isNotEmpty) {
+          try {
+            await hiveService.storeImage(imageBytes, folderName);
+            print('Image $i saved successfully');
+          } catch (error) {
+            print('Failed to save image $i: $error');
+            allImagesSaved = false;
+          }
+        } else {
+          print('Image bytes at index $i are empty');
+          allImagesSaved = false;
+        }
+      }
+      // }
+    }
+
+    selectedImagePaths.clear();
+
+    if (allImagesSaved) {
+      showSnackBar(
+          context, 'All selected images have been saved to the database.');
+      //_openSavedImagesScreen();
+    } else {
+      showSnackBar(context, 'Some images have not been saved to the database.');
+    }
+    return true;
+    // Navigator.pop(context, true);
+  }
+
+  static Future<Uint8List> getImageBytes(String filePath) async {
+    try {
+      // Create a File object from the given file path
+      File file = File(filePath);
+
+      // Read the file as bytes
+      Uint8List fileData = await file.readAsBytes();
+
+      if (fileData.isNotEmpty) {
+        // If the file data is not empty, return the bytes
+        return fileData;
+      } else {
+        print('File data is empty for path $filePath');
+        return Uint8List(0);
+      }
+    } catch (error) {
+      print('Error reading image bytes for path $filePath: $error');
+      return Uint8List(0);
+    }
+  }
+
+  static void showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  static Future<Uint8List?> generateVideoThumbnail(String videoPath) async {
+    final thumbnailPath = await VideoThumbnail.thumbnailData(
+      video: videoPath,
+      imageFormat: ImageFormat.JPEG,
+      // Adjust thumbnail size as needed
+      quality: 100, // Adjust thumbnail quality as needed
+    );
+    return thumbnailPath;
+  }
+}
+
+class ImageWidget extends StatefulWidget {
+  const ImageWidget({
+    super.key,
+    required this.entity,
+  });
+
+  final AssetEntity entity;
+
+  @override
+  State<ImageWidget> createState() => _ImageWidgetState();
+}
+
+class _ImageWidgetState extends State<ImageWidget> {
+  late final future;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      future = widget.entity.file;
+      setState(() {
+        loading = false;
+      });
+    });
+    super.initState();
+  }
+
+  bool loading = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return LoadingWidget();
+    }
+    return FutureBuilder(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<File?> snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          final file = snapshot.data;
+          if (file != null) {
+            // print('before buildImageWidget');
+            final String filePath = file.path.toLowerCase();
+            if (filePath.endsWith('.mp4') || filePath.endsWith('.mov')) {
+              // print('buildvideowidget $type');
+              // return SizedBox();
+              return NestedVideoWidget(file: file);
+            } else {
+              // print('futurebuilder: $type');
+              return NestedImageWidget(file: file);
+            }
+          }
+        }
+        return const Center(
+            child:
+            CircularProgressIndicator()); // clienrt was sayiong probably we have in thousands of images in ios a  minimum of 200 will be okay
+      },
+    );
+  }
+}
+
+class NestedVideoWidget extends StatefulWidget {
+  const NestedVideoWidget({
+    super.key,
+    required this.file,
+  });
+
+  final File file;
+
+  @override
+  State<NestedVideoWidget> createState() => _NestedVideoWidgetState();
+}
+
+class _NestedVideoWidgetState extends State<NestedVideoWidget> {
+  late final future;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      future = _generateThumbnail(widget.file);
+      setState(() {
+        loading = false;
+      });
+    });
+    super.initState();
+  }
+
+  Future<Uint8List?> _generateThumbnail(File file) async {
+    try {
+      // print('MK: before thumbnail:');
+      final thumbnail = await VideoThumbnail.thumbnailData(
+        video: file.path,
+        imageFormat: ImageFormat.PNG, // Choose the desired image format
+        quality: 10, // Adjust the quality of the thumbnail (0 - 100)
+      );
+      // print('MK: thumbnail done');
+      return thumbnail;
+    } catch (e, s) {
+      print('MK: error in thumbnail: $e and $s');
+    }
+    return null;
+  }
+
+  bool loading = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return LoadingWidget();
+    }
+    return FutureBuilder(
+      future: future,
+      builder: (context, snapshot) {
+        // print('MK: snapshot in vid widget: ${snapshot.hasData}');
+        if (snapshot.hasError) {
+          // print('MK: snapshot error: ${snapshot.error} ${snapshot.stackTrace}');
+        }
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.data != null) {
+          final Uint8List thumbnailBytes = snapshot.data as Uint8List;
+          return Image.memory(
+            thumbnailBytes,
+            width: 100, // Set a fixed width for the thumbnail
+            height: 100,
+            fit: BoxFit.cover,
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
+        }
+      },
+    );
+  }
+}
+
+class NestedImageWidget extends StatefulWidget {
+  const NestedImageWidget({
+    super.key,
+    required this.file,
+  });
+
+  final File file;
+
+  @override
+  State<NestedImageWidget> createState() => _NestedImageWidgetState();
+}
+
+class _NestedImageWidgetState extends State<NestedImageWidget> {
+  late final future;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      future = widget.file.readAsBytes();
+      setState(() {
+        loading = false;
+      });
+    });
+    super.initState();
+  }
+
+  bool loading = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return LoadingWidget();
+    }
+    return FutureBuilder(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<Uint8List> bytesSnapshot) {
+        if (bytesSnapshot.connectionState == ConnectionState.done) {
+          final bytes = bytesSnapshot.data;
+          // print('original bytes : $bytes');
+          if (bytes != null) {
+            return Container(
+                width: 100, // Set a fixed width for the image
+                height: 100,
+                child: Image.memory(bytes, fit: BoxFit.cover));
+          }
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+}
+
+class LoadingWidget extends StatelessWidget {
+  const LoadingWidget({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 100, // Set a fixed width for the image
+      height: 100,
+      color: Colors.black12,
     );
   }
 }

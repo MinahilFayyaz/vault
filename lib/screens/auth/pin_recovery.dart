@@ -27,6 +27,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
   );
 
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -91,9 +92,11 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         textInputAction: TextInputAction.done,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
+                            print('Please enter your email');
                             return 'Please enter your email';
                           }
                           if (!emailRegex.hasMatch(value)) {
+                            print('valid emIAIL ADDRESS');
                             return 'Enter a valid email address';
                           }
                           return null;
@@ -123,12 +126,20 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                       CustomButton(
                         ontap: () {
                           if (emailController.text.isEmpty) {
+                            print('enter your email address');
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(AppLocalizations.of(context)!.enterYourEmail),
                               ),
                             );
-                          } else {
+                          } else if (!emailRegex.hasMatch(emailController.text)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("enter valid email address"),
+                              ),
+                            );
+                          }
+                          else {
                             FirebaseAnalytics.instance.logEvent(
                               name: 'pin_recovery_email',
                               parameters: <String, dynamic>{
@@ -136,6 +147,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                                 'action': 'Setup Button clicked',
                               },
                             );
+                            Provider.of<AuthProvider>(context, listen: false).getEmail(email: emailController.text);
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -146,6 +158,7 @@ class _PinRecoveryPageState extends State<PinRecoveryPage> {
                         },
                         buttontext: AppLocalizations.of(context)!.setUp,
                       ),
+
                       SizedBox(
                         height: size.height * 0.01,
                       ),

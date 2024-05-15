@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:vault/screens/gallery.dart';
 
 import 'consts/consts.dart';
@@ -50,7 +51,7 @@ class _PermissionState extends State<Permission> {
           ),
           // Content in the middle
           Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Center(child: Image.asset('assets/Frame 37366.png')),
               Padding(
@@ -77,13 +78,36 @@ class _PermissionState extends State<Permission> {
                   horizontal: size.width * 0.05,
                 ),
                 child: CustomButton(
-                  ontap: () {
-                    dynamic res = Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => GalleryScreen(folderName: widget.folderName),
-                    ));
-                    if (res == true) {
-                      setState(() {});
+                  ontap: () async {
+                    if (widget.folderName!.isNotEmpty){
+                      final pickedFiles = await ImagePicker().pickMultipleMedia();
+                      print('MK: pickedFiles: ${pickedFiles.length}');
+                      List<String> filesPath =
+                      pickedFiles.map((e) => e.path).toList();
+                      final res = await GalleryService.showConfirmationDialog(context,
+                          selectedImagePaths: filesPath,
+                          folderName: widget.folderName!);
+                      if (res == true) {
+                        setState(() {});
+                      }
                     }
+                   else{
+                      Navigator.pop(context);
+                  }
+    
+                    // final pickedFiles = await ImagePicker().pickMultipleMedia();
+                    // print('MK: pickedFiles: ${pickedFiles.length}');
+                    // List<String> filesPath =
+                    // pickedFiles.map((e) => e.path).toList();
+                    // final res = await GalleryService.showConfirmationDialog(context,
+                    //     selectedImagePaths: filesPath,
+                    //     folderName: widget.folderName!);
+                    // if (res == true) {
+                    //   setState(() {});
+                    // }
+                    // if (widget.folderName == null || widget.folderName == '') {
+                    //   Navigator.pop(context);
+                    // }
                   },
                   buttontext: 'Got it',
                 ),

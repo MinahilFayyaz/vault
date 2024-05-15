@@ -449,17 +449,18 @@ class SettingsPage extends StatelessWidget {
                                         ),
                                       ),
                                       minimumSize: MaterialStateProperty.all(
-                                          Size(120, 40)),
+                                          Size(100, 40)),
                                       // Set button size
                                       backgroundColor:
                                       MaterialStateProperty.all(Consts
                                           .COLOR), // Set background color
                                     ),
                                     child: Text(
-                                      AppLocalizations.of(context)!.saveToGallery,
+                                      AppLocalizations.of(context)!.gallery,
                                       style: TextStyle(color: Colors.white),
                                     ),
                                   ),
+
                                   TextButton(
                                     onPressed: () {
                                       // User chose to download the zip file
@@ -474,7 +475,7 @@ class SettingsPage extends StatelessWidget {
                                         ),
                                       ),
                                       minimumSize: MaterialStateProperty.all(
-                                          Size(120, 40)),
+                                          Size(100, 40)),
                                       // Set button size
                                       backgroundColor:
                                       MaterialStateProperty.all(Consts

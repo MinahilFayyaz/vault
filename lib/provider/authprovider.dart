@@ -28,4 +28,10 @@ class AuthProvider with ChangeNotifier {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     masterpassword = prefs.getString('password') ?? '';
   }
+
+  Future<void> getEmail({required String email}) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', email);
+  }
+
 }

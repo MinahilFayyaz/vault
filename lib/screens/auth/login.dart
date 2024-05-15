@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:form_field_validator/form_field_validator.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server/gmail.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,6 +30,34 @@ class _LoginPageState extends State<LoginPage> {
   List.generate(4, (_) => TextEditingController());
   final passwordMatchValidator =
   MatchValidator(errorText: 'Passwords do not match');
+  int _incorrectAttempts = 0;
+
+
+  Future<void> sendEmail(String recipient, String subject, String body) async {
+    // Create SMTP server configuration
+    final smtpServer = gmail('minahilfayyaz9@gmail.com', 'pcso bxgj vyva lhnp');
+
+    // Create the message to send
+    final message = Message()
+      ..from = Address('minahilfayyaz9@gmail.com', 'Minahil Fayyaz')
+      ..recipients.add(recipient)
+      ..subject = subject
+      ..text = body;
+
+    // Send the email
+    try {
+      final sendReport = await send(message, smtpServer);
+      print('Message sent: ' + sendReport.toString());
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Mail Send Successfully")));
+    } on MailerException catch (e) {
+      print('Message not sent.');
+      print(e.message);
+      for (var p in e.problems) {
+        print('Problem: ${p.code}: ${p.msg}');
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -52,6 +82,7 @@ class _LoginPageState extends State<LoginPage> {
   void _validatePin(String pin) async {
     // Retrieve the master password
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('email') ?? '';
     String masterPassword = prefs.getString('password') ?? '';
 
     // Compare the entered pin with the master password
@@ -63,6 +94,7 @@ class _LoginPageState extends State<LoginPage> {
           'action': 'correct passcode',
         },
       );
+      _incorrectAttempts = 0;
       await Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -70,7 +102,18 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      FirebaseAnalytics.instance.logEvent(
+      _incorrectAttempts++;
+      // Check if the incorrect attempts exceed 3
+      if (_incorrectAttempts >= 3) {
+        // Send email notification
+        final emailBody = 'Your login passcode is: $masterPassword';
+        await sendEmail(savedEmail, 'Login Passcode', emailBody);
+
+        // Reset the incorrect attempts count
+        _incorrectAttempts = 0;
+      };
+
+    FirebaseAnalytics.instance.logEvent(
         name: 'login_passcode',
         parameters: <String, dynamic>{
           'activity': 'Navigating to Homescreen',
@@ -126,11 +169,11 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         SizedBox(height: size.height * 0.07),
                         Theme.of(context).brightness == Brightness.light
-                         ? SvgPicture.asset(
+                            ? SvgPicture.asset(
                           'assets/padlock 3.svg',
                           height: size.height * 0.1,
                         )
-                        : SvgPicture.asset("assets/padlock 2.svg"),
+                            : SvgPicture.asset("assets/padlock 2.svg"),
                         SizedBox(height: size.height * 0.03),
                         Text(
                           AppLocalizations.of(context)!.enterYourPasscode,
@@ -198,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                                       shape: CircleBorder(),
                                     ),
                                     child: Text(
-                                        '0',
+                                      '0',
                                       style: TextStyle(
                                         fontSize: 20,
                                         color: Theme.of(context).brightness ==
@@ -267,34 +310,32 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void validate(String pin) async {
-    final FormState form = _loginformKey.currentState!;
-
-    // Retrieve the master password
-    final masterPassword = context.read<AuthProvider>().getMasterPassword();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var masterpassword = prefs.getString('password') ?? '';
-    // Compare the entered pin with the master password
-    if (pin == masterpassword) {
-      if (form.validate()) {
-        await Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomePage(),
-          ),
-        );
-      }
-    } else {
-      // Show an error message or handle incorrect pin
-      // For example:
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Incorrect pin code. Please try again.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
+// void validate(String pin) async {
+//   final FormState form = _loginformKey.currentState!;
+//
+//   // Retrieve the master password
+//   final masterPassword = context.read<AuthProvider>().getMasterPassword();
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
+//   var masterpassword = prefs.getString('password') ?? '';
+//   // Compare the entered pin with the master password
+//   if (pin == masterpassword) {
+//     if (form.validate()) {
+//       await Navigator.pushReplacement(
+//         context,
+//         MaterialPageRoute(
+//           builder: (context) => const HomePage(),
+//         ),
+//       );
+//     }
+//   } else {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text('Incorrect pin code. Please try again.'),
+//         duration: Duration(seconds: 2),
+//       ),
+//     );
+//   }
+// }
 }
 
 class PinInputField extends StatelessWidget {

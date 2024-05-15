@@ -40,12 +40,15 @@ dependencies:
   provider:
   sqflite:
   cached_network_image:
+  flutter_cache_manager:
   favicon:
   intl:
+  cached_memory_image:
   flutter_localizations:
     sdk: flutter
   path:
   flutter_svg:
+  mailer:
   flutter_native_splash:
   image_picker:
   hive:
@@ -64,6 +67,7 @@ dependencies:
   firebase_core:
   firebase_analytics:
   firebase_crashlytics:
+  tutorial_coach_mark:
 
 dev_dependencies:
   hive_generator: ^2.0.1
